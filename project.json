@@ -1,0 +1,28 @@
+{
+  "langrev": "1",
+  "warnings": [
+    "no-unused"
+  ],
+  "dependency-search-paths": [
+    "lib"
+  ],
+  "dependencies": [],
+  "authors": [
+    "Snikimonkd"
+  ],
+  "version": "0.1.0",
+  "sources": [
+    "src/**"
+  ],
+  "test-sources": [
+    "test/**"
+  ],
+  "output": "build",
+  "targets": {
+    "bestty": {
+      "type": "executable"
+    }
+  },
+  "cpu": "generic",
+  "opt": "O0"
+}
