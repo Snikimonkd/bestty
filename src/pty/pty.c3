@@ -85,12 +85,12 @@ fn void! open() {
 
     // child
     if (pid == 0) {
-        String sh = env::get_var("SHELL", allocator)!;
-        defer (void)free(sh);
+//        String sh = env::get_var("SHELL", allocator)!;
+//        defer (void)free(sh);
+//        ZString*[] args = {&&((ZString)sh), null};
 
-        ZString*[] args = {&&((ZString)sh), null};
-
-        ZString*[] tmp = {&&((ZString)"zsh"), null};
+        env::set_var("BASH_SILENCE_DEPRECATION_WARNING", "1", true);
+        ZString*[] tmp = {&&((ZString)"sh"), null};
         CInt res = execvp(*tmp[0], tmp);
         if (res == -1) {
             logger::printfn("[SLAVE] can't exec shell");
@@ -106,8 +106,6 @@ fn void! open() {
 
     int flags = fcntl(master, F_GETFL, 0);
     if (flags == -1) {
-//        io::printfn("some text, %d", lol);
-//        logger::printfn("can't get flags: %d", (int)libc::errno());
         io::printfn("err, %d", (int)libc::errno());
         return;
     }
@@ -134,7 +132,7 @@ fn void! open() {
     if (res == -1) {
         logger::printfn("first read errno: %s", libc::errno());
     } else {
-        logger::printfn("read command: %s",  ((ZString)buf).str_view());
+        logger::printfn("first read: %s",  ((ZString)buf).str_view());
     }
 
     String cmd = "git config\n";
@@ -144,15 +142,22 @@ fn void! open() {
         return;
     }
 
+    thread::sleep(6*time::SEC);
     logger::printfn("second read");
     for (int i = 0; i < 10; i++) {
-        thread::sleep(time::SEC);
         res = libc::read(master, buf, TMP_SIZE);
-        if (res == -1 && libc::errno() != errno::EAGAIN) {
-            logger::printfn("errno: %s", libc::errno());
-            return;
-        } else {
-            logger::printfn("read command: %s",  ((ZString)buf).str_view());
+        if (res != -1) {
+            logger::printfn("second read: %s",  ((ZString)buf).str_view());
+            continue;
         }
+
+        if (libc::errno() == errno::EAGAIN) {
+            logger::printfn("eagain, i: %s", i);
+            thread::sleep(time::SEC);
+            continue;
+        }
+
+        logger::printfn("errno: %s", libc::errno());
+        return;
     }
 }

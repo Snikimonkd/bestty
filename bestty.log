@@ -1,10 +1,9 @@
-shel init: [[1m[7m%[27m[1m[0m                                                                                ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\]
+shel init: [[?1034hȼ�-3.2$ ]
 first read
-read command: [[0m[27m[24m[J[38;5;239m~/bestty [38;5;108m[main] [38;5;175m❯[39m [K                       ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\]
+first read errno: [35]
 second read
-read command: [[?1h=[?2004hggit config[10D[32mg[32mi[32mt[39m[7C[?1l>[?2004l
-[K                       ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\]
-read command: [usage: git config [<options>]
+second read: [git config
+usage: git config [<options>]
 
 Config file location
     --global              use global config file
@@ -24,8 +23,9 @@ Action
     --unset               remove a variable: name [value-pattern]
     --unset-all           remove all matches: name [value-pattern]
     --rename-section      rename section: old-name new-name
-    --remove-section  ]
-read command: [    remove a section: name
+    --remo]
+eagain, i: [1]
+second read: [ve-section      remove a section: name
     -l, --list            list all
     --fixed-value         use string equality when comparing values to 'value-pattern'
     -e, --edit            open an editor
@@ -46,11 +46,14 @@ Other
     --name-only           show variable names only
     --includes            respect include directives on lookup
     --show-origin         show origin of config (file, standard input, blob, command line)
-    --show-scope         ]
-read command: [ show scope of config (worktree, local, global, system, command)
+    --show-sc]
+second read: [ope          show scope of config (worktree, local, global, system, command)
     --default <value>     with --get, use default value when missing entry
 
-[1m[7m%[27m[1m[0m                                                                                ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\tdout-is-tty]
+ttern'
+    -e, --edit            open an editor
+    --get-color           find the color configured: slot [default]
+    --get-colorbool       find the color setting: slot [stdout-is-tty]
 
 Type
     -t, --type <type>     value is given this type
@@ -66,29 +69,15 @@ Other
     --name-only           show variable names only
     --includes            respect include directives on lookup
     --show-origin         show origin of config (file, standard input, blob, command line)
-    --show-scope         ]
-read command: [[0m[27m[24m[J[38;5;239m~/bestty [38;5;108m[main] [38;5;175m❯[39m [K[?1h=[?2004hth --get, use default value when missing entry
+    --show-sc]
+eagain, i: [4]
+second read: [ȼ�-3.2$     show scope of config (worktree, local, global, system, command)
+    --default <value>     with --get, use default value when missing entry
 
-[1m[7m%[27m[1m[0m                                                                                ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\tdout-is-tty]
-
-Type
-    -t, --type <type>     value is given this type
-    --bool                value is "true" or "false"
-    --int                 value is decimal number
-    --bool-or-int         value is --bool or --int
-    --bool-or-str         value is --bool or string
-    --path                value is a path (file or directory name)
-    --expiry-date         value is an expiry date
-
-Other
-    -z, --null            terminate values with NUL byte
-    --name-only           show variable names only
-    --includes            respect include directives on lookup
-    --show-origin         show origin of config (file, standard input, blob, command line)
-    --show-scope         ]
-read command: [[0m[27m[24m[J[38;5;239m~/bestty [38;5;108m[main] [38;5;175m❯[39m [K[?1h=[?2004hth --get, use default value when missing entry
-
-[1m[7m%[27m[1m[0m                                                                                ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\tdout-is-tty]
+ttern'
+    -e, --edit            open an editor
+    --get-color           find the color configured: slot [default]
+    --get-colorbool       find the color setting: slot [stdout-is-tty]
 
 Type
     -t, --type <type>     value is given this type
@@ -104,80 +93,8 @@ Other
     --name-only           show variable names only
     --includes            respect include directives on lookup
     --show-origin         show origin of config (file, standard input, blob, command line)
-    --show-scope         ]
-read command: [[0m[27m[24m[J[38;5;239m~/bestty [38;5;108m[main] [38;5;175m❯[39m [K[?1h=[?2004hth --get, use default value when missing entry
-
-[1m[7m%[27m[1m[0m                                                                                ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\tdout-is-tty]
-
-Type
-    -t, --type <type>     value is given this type
-    --bool                value is "true" or "false"
-    --int                 value is decimal number
-    --bool-or-int         value is --bool or --int
-    --bool-or-str         value is --bool or string
-    --path                value is a path (file or directory name)
-    --expiry-date         value is an expiry date
-
-Other
-    -z, --null            terminate values with NUL byte
-    --name-only           show variable names only
-    --includes            respect include directives on lookup
-    --show-origin         show origin of config (file, standard input, blob, command line)
-    --show-scope         ]
-read command: [[0m[27m[24m[J[38;5;239m~/bestty [38;5;108m[main] [38;5;175m❯[39m [K[?1h=[?2004hth --get, use default value when missing entry
-
-[1m[7m%[27m[1m[0m                                                                                ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\tdout-is-tty]
-
-Type
-    -t, --type <type>     value is given this type
-    --bool                value is "true" or "false"
-    --int                 value is decimal number
-    --bool-or-int         value is --bool or --int
-    --bool-or-str         value is --bool or string
-    --path                value is a path (file or directory name)
-    --expiry-date         value is an expiry date
-
-Other
-    -z, --null            terminate values with NUL byte
-    --name-only           show variable names only
-    --includes            respect include directives on lookup
-    --show-origin         show origin of config (file, standard input, blob, command line)
-    --show-scope         ]
-read command: [[0m[27m[24m[J[38;5;239m~/bestty [38;5;108m[main] [38;5;175m❯[39m [K[?1h=[?2004hth --get, use default value when missing entry
-
-[1m[7m%[27m[1m[0m                                                                                ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\tdout-is-tty]
-
-Type
-    -t, --type <type>     value is given this type
-    --bool                value is "true" or "false"
-    --int                 value is decimal number
-    --bool-or-int         value is --bool or --int
-    --bool-or-str         value is --bool or string
-    --path                value is a path (file or directory name)
-    --expiry-date         value is an expiry date
-
-Other
-    -z, --null            terminate values with NUL byte
-    --name-only           show variable names only
-    --includes            respect include directives on lookup
-    --show-origin         show origin of config (file, standard input, blob, command line)
-    --show-scope         ]
-read command: [[0m[27m[24m[J[38;5;239m~/bestty [38;5;108m[main] [38;5;175m❯[39m [K[?1h=[?2004hth --get, use default value when missing entry
-
-[1m[7m%[27m[1m[0m                                                                                ]2;bestty]7;file://mbp-slukash-OZON-NY9CC6MJXF/Users/slukash/bestty\tdout-is-tty]
-
-Type
-    -t, --type <type>     value is given this type
-    --bool                value is "true" or "false"
-    --int                 value is decimal number
-    --bool-or-int         value is --bool or --int
-    --bool-or-str         value is --bool or string
-    --path                value is a path (file or directory name)
-    --expiry-date         value is an expiry date
-
-Other
-    -z, --null            terminate values with NUL byte
-    --name-only           show variable names only
-    --includes            respect include directives on lookup
-    --show-origin         show origin of config (file, standard input, blob, command line)
-    --show-scope         ]
+    --show-sc]
+eagain, i: [6]
+eagain, i: [7]
+eagain, i: [8]
+eagain, i: [9]
