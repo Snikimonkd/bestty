@@ -1,7 +1,10 @@
 module pty;
 
+import logger;
+
 import std::io;
 import std::os;
+import std::net::os;
 import libc;
 import std::time;
 import std::thread;
@@ -59,6 +62,13 @@ struct Winsize {
 
 extern fn CInt forkpty(CInt *amaster, char *name, Termios *termp, Winsize *winp);
 extern fn CInt execvp(ZString path, ZString*[] argv);
+extern fn int ioctl(CInt socket, int cmd, ...);
+extern fn int fcntl(CInt socket, int cmd, ...);
+
+const int F_GETFD = 1;
+const int F_SETFD = 2;
+const int F_GETFL = 3;
+const int F_SETFL = 4;
 
 fn void! open() {
     Allocator allocator = allocator::heap();
@@ -68,6 +78,7 @@ fn void! open() {
 
     int pid = forkpty(&master, null, null, &ws);
     if (pid == -1) {
+        logger::printfn("can't fork pty");
         io::printfn("error");
         return;
     }
@@ -79,28 +90,69 @@ fn void! open() {
 
         ZString*[] args = {&&((ZString)sh), null};
 
-        CInt res = execvp((ZString)sh, args);
+        ZString*[] tmp = {&&((ZString)"zsh"), null};
+        CInt res = execvp(*tmp[0], tmp);
         if (res == -1) {
+            logger::printfn("[SLAVE] can't exec shell");
             return PtyError.EXEC_SHELL_ERROR?;
         }
 
-        thread::sleep(5*time::SEC);
+        thread::sleep(time::SEC);
+        logger::printfn("[SLAVE] i can't be here");
+
+        return;
+    }
+    thread::sleep(2*time::SEC);
+
+    int flags = fcntl(master, F_GETFL, 0);
+    if (flags == -1) {
+//        io::printfn("some text, %d", lol);
+//        logger::printfn("can't get flags: %d", (int)libc::errno());
+        io::printfn("err, %d", (int)libc::errno());
         return;
     }
 
-    thread::sleep(5*time::SEC);
+    int a = fcntl(master, F_SETFL, flags | os::O_NONBLOCK);
+    if (a == -1) {
+        logger::printfn("can't set flags: %s", libc::errno());
+        return;
+    }
 
-    const usz TMP_SIZE = 1000;
+    const usz TMP_SIZE = 10000;
     char* buf = allocator::malloc_try(allocator::heap(), TMP_SIZE+1)!;
 
     isz res = libc::read(master, buf, TMP_SIZE);
-    io::printfn("read: res: %d", res);
-    io::printfn("read: buf: %s", (ZString)buf);
+    if (res == -1) {
+        logger::printfn("errno: %s", libc::errno());
+        return;
+    } else {
+        logger::printfn("shel init: %s", ((ZString)buf).str_view());
+    }
 
-    res = libc::write(master, "pwd\n", 4);
-    io::printfn("write: res: %d", res);
-
+    logger::printfn("first read");
     res = libc::read(master, buf, TMP_SIZE);
-    io::printfn("read: res: %d", res);
-    io::printfn("read: buf: %s", (ZString)buf);
+    if (res == -1) {
+        logger::printfn("first read errno: %s", libc::errno());
+    } else {
+        logger::printfn("read command: %s",  ((ZString)buf).str_view());
+    }
+
+    String cmd = "git config\n";
+    res = libc::write(master, cmd, cmd.len);
+    if (res != cmd.len) {
+        logger::printfn("errno: %s", libc::errno());
+        return;
+    }
+
+    logger::printfn("second read");
+    for (int i = 0; i < 10; i++) {
+        thread::sleep(time::SEC);
+        res = libc::read(master, buf, TMP_SIZE);
+        if (res == -1 && libc::errno() != errno::EAGAIN) {
+            logger::printfn("errno: %s", libc::errno());
+            return;
+        } else {
+            logger::printfn("read command: %s",  ((ZString)buf).str_view());
+        }
+    }
 }
