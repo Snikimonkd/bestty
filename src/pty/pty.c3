@@ -52,7 +52,7 @@ fn void! Pty.init(&self, Fd master) {
     return;
 }
 
-fn Key! Pty.read_key(&self) {
+fn char! Pty.read_key(&self) {
     char c;
     isz res = 0;
     while(res != 1) {
@@ -80,7 +80,7 @@ fn Key! Pty.read_key(&self) {
 //        }
     }
 
-    return (Key)c;
+    return c;
 }
 
 fn void! Pty.write(&self, ZString cmd) {
@@ -188,7 +188,7 @@ fn void! open() {
     thread::sleep(2*time::SEC);
     DString shell_init;
     while (true) {
-        Key! c = pty.read_key();
+        char! c = pty.read_key();
         if (catch err = c) {
             if (err == PtyError.EMPTY) {
                 logger::printfn("nothing to read");
@@ -199,29 +199,39 @@ fn void! open() {
                 return err?;
             }
         }
-
-        shell_init.append_char((char)c);
+        switch (c) {
+            case Key.UP.code:
+            // todo
+            default:
+            shell_init.append_char(c);
+        }
     }
     logger::printf("%s", shell_init);
 
     // write
     pty.write("ls -lah\n")!;
 
-    ZString tmp = "";
+    thread::sleep(2*time::SEC);
+
+    DString cmd_res;
     while (true) {
-        Key! c = pty.read_key();
+        char! c = pty.read_key();
         if (catch err = c) {
             if (err == PtyError.EMPTY) {
                 logger::printfn("nothing to read");
                 break;
             } else if (err == PtyError.CONTROL) {
-                logger::printfn("control");
                 continue;
             } else {
                 return err?;
             }
         }
-
-        logger::printf("%s", (ZString)&c);
+        switch (c) {
+            case Key.UP.code:
+            // todo
+            default:
+            cmd_res.append_char(c);
+        }
     }
+    logger::printf("%s", cmd_res);
 }
