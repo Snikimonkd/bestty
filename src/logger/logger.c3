@@ -17,10 +17,14 @@ fn void close() {
     }
 }
 
-// logger::printfn("errno: %d", libc::errno());
-// errno: <INVALID>
 fn void printfn(String format, args...) {
     if (catch excuse = io::fprintfn(&out, format, args)) {
+        io::printfn("can't write to log: %s", excuse);
+    }
+}
+
+fn void printf(String format, args...) {
+    if (catch excuse = io::fprintf(&out, format, args)) {
         io::printfn("can't write to log: %s", excuse);
     }
 }

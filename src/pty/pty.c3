@@ -4,19 +4,99 @@ import logger;
 
 import std::io;
 import std::os;
+import std::os::env;
 import std::net::os;
-import libc;
 import std::time;
 import std::thread;
-import std::os::env;
+
+import libc;
+
+const usz BUF_SIZE = 128;
 
 fault PtyError {
+    EXEC_SHELL_ERROR,
     FORK_ERROR,
     WRITE_ERROR,
-    EXEC_SHELL_ERROR,
+    READ_ERROR,
+    GET_FLAGS_ERROR,
+    SET_FLAGS_ERROR,
+
+    EMPTY,
+    CONTROL,
+}
+
+enum Key : ushort (ushort code) {
+    UP = 201,
 }
 
 def Fd = CInt;
+
+struct Pty {
+    Fd master;
+}
+
+fn void! Pty.init(&self, Fd master) {
+    int flags = fcntl(master, F_GETFL, 0);
+    if (flags == -1) {
+        logger::printfn("can't get master fd flags: %s", libc::errno());
+        return PtyError.GET_FLAGS_ERROR?;
+    }
+
+    int a = fcntl(master, F_SETFL, flags | os::O_NONBLOCK);
+    if (a == -1) {
+        logger::printfn("can't set master fd flags: %s", libc::errno());
+        return PtyError.SET_FLAGS_ERROR?;
+    }
+
+    *self = { .master = master };
+    return;
+}
+
+fn Key! Pty.read_key(&self) {
+    char c;
+    isz res = 0;
+    while(res != 1) {
+        res = libc::read(self.master, &c, 1);
+        if (res == -1 && libc::errno() != errno::EAGAIN) {
+            logger::printfn("can't read from master fd: %s", libc::errno());
+            return PtyError.READ_ERROR?;
+        }
+        if (res == -1 && libc::errno() == errno::EAGAIN) {
+            return PtyError.EMPTY?;
+        }
+    }
+
+    if (c == '\x1b') {
+        return PtyError.CONTROL?;
+//        char[3] seq;
+//        res = libc::read(self.master, &seq[0], 3);
+//        if (res != 1) {
+//            return '\x1b';
+//        }
+//
+//        res = libc::read(self.master, &seq[1], 3);
+//        if (res != 1) {
+//            return '\x1b';
+//        }
+    }
+
+    return (Key)c;
+}
+
+fn void! Pty.write(&self, ZString cmd) {
+    isz written = 0;
+    isz len = cmd.char_len();
+    while (written < len) {
+        isz res = libc::write(self.master, (char*)cmd[written:len], len-written);
+        if (res == -1) {
+            logger::printfn("can't write to master fd: %s", libc::errno());
+            return PtyError.WRITE_ERROR?;
+        }
+        written += res;
+    }
+
+    return;
+}
 
 struct Termios {
     //    tcflag_t        c_iflag;
@@ -62,7 +142,6 @@ struct Winsize {
 
 extern fn CInt forkpty(CInt *amaster, char *name, Termios *termp, Winsize *winp);
 extern fn CInt execvp(ZString path, ZString*[] argv);
-extern fn int ioctl(CInt socket, int cmd, ...);
 extern fn int fcntl(CInt socket, int cmd, ...);
 
 const int F_GETFD = 1;
@@ -102,62 +181,47 @@ fn void! open() {
 
         return;
     }
+
+    Pty pty;
+    pty.init(master)!;
+
     thread::sleep(2*time::SEC);
-
-    int flags = fcntl(master, F_GETFL, 0);
-    if (flags == -1) {
-        io::printfn("err, %d", (int)libc::errno());
-        return;
-    }
-
-    int a = fcntl(master, F_SETFL, flags | os::O_NONBLOCK);
-    if (a == -1) {
-        logger::printfn("can't set flags: %s", libc::errno());
-        return;
-    }
-
-    const usz TMP_SIZE = 10000;
-    char* buf = allocator::malloc_try(allocator::heap(), TMP_SIZE+1)!;
-
-    isz res = libc::read(master, buf, TMP_SIZE);
-    if (res == -1) {
-        logger::printfn("errno: %s", libc::errno());
-        return;
-    } else {
-        logger::printfn("shel init: %s", ((ZString)buf).str_view());
-    }
-
-    logger::printfn("first read");
-    res = libc::read(master, buf, TMP_SIZE);
-    if (res == -1) {
-        logger::printfn("first read errno: %s", libc::errno());
-    } else {
-        logger::printfn("first read: %s",  ((ZString)buf).str_view());
-    }
-
-    String cmd = "git config\n";
-    res = libc::write(master, cmd, cmd.len);
-    if (res != cmd.len) {
-        logger::printfn("errno: %s", libc::errno());
-        return;
-    }
-
-    thread::sleep(6*time::SEC);
-    logger::printfn("second read");
-    for (int i = 0; i < 10; i++) {
-        res = libc::read(master, buf, TMP_SIZE);
-        if (res != -1) {
-            logger::printfn("second read: %s",  ((ZString)buf).str_view());
-            continue;
+    DString shell_init;
+    while (true) {
+        Key! c = pty.read_key();
+        if (catch err = c) {
+            if (err == PtyError.EMPTY) {
+                logger::printfn("nothing to read");
+                break;
+            } else if (err == PtyError.CONTROL) {
+                continue;
+            } else {
+                return err?;
+            }
         }
 
-        if (libc::errno() == errno::EAGAIN) {
-            logger::printfn("eagain, i: %s", i);
-            thread::sleep(time::SEC);
-            continue;
+        shell_init.append_char((char)c);
+    }
+    logger::printf("%s", shell_init);
+
+    // write
+    pty.write("ls -lah\n")!;
+
+    ZString tmp = "";
+    while (true) {
+        Key! c = pty.read_key();
+        if (catch err = c) {
+            if (err == PtyError.EMPTY) {
+                logger::printfn("nothing to read");
+                break;
+            } else if (err == PtyError.CONTROL) {
+                logger::printfn("control");
+                continue;
+            } else {
+                return err?;
+            }
         }
 
-        logger::printfn("errno: %s", libc::errno());
-        return;
+        logger::printf("%s", (ZString)&c);
     }
 }
