@@ -24,9 +24,6 @@ fault PtyError {
     EMPTY,
 }
 
-enum Key : ushort (ushort code) {
-    UP = 201,
-}
 
 def Fd = CInt;
 

@@ -70,11 +70,12 @@ fn void! run(pty::Pty pty) {
         rl::beginDrawing();
         rl::clearBackground(rl::GRAY);
 
-        rl::drawRectangleRec(input, rl::LIGHTGRAY);
 
         // print cmd
+        rl::drawRectangleRec(input, rl::LIGHTGRAY);
         rl::drawText(cmd, (int)input.x+5, (int)input.y+3, 40, rl::DARKGREEN);
 
+        // print results
         rl::drawRectangleRec(output, rl::BLACK);
         rl::drawText(res.zstr_view(), (int)output.x+5, (int)output.y+3, 10, rl::WHITE);
         logger::printfn("output: %s", res);
