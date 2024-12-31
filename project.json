@@ -1,22 +1,12 @@
 {
   "langrev": "1",
-  "warnings": [
-    "no-unused"
-  ],
-  "dependency-search-paths": [
-    "lib"
-  ],
-  "dependencies": [],
-  "authors": [
-    "Snikimonkd"
-  ],
+  "warnings":  [ "no-unused" ],
+  "dependency-search-paths":  [ "lib" ],
+  "dependencies":  [ "raylib5" ],
+  "authors":  [ "Snikimonkd" ],
   "version": "0.1.0",
-  "sources": [
-    "src/**"
-  ],
-  "test-sources": [
-    "test/**"
-  ],
+  "sources":  [ "src/**" ],
+  "test-sources":  [ "test/**" ],
   "output": "build",
   "targets": {
     "bestty": {

@@ -22,7 +22,6 @@ fault PtyError {
     SET_FLAGS_ERROR,
 
     EMPTY,
-    CONTROL,
 }
 
 enum Key : ushort (ushort code) {
@@ -52,7 +51,19 @@ fn void! Pty.init(&self, Fd master) {
     return;
 }
 
-fn char! Pty.read_key(&self) {
+fn void prt(char* str, int len) {
+    logger::printfn("################");
+    for (int i = 0; i < len; i++) {
+        logger::printf("%c",str[i]);
+    }
+    logger::printfn("\n################");
+    for (int i = 0; i < len; i++) {
+        logger::printf("%s,",str[i]);
+    }
+    logger::printfn("\n################");
+}
+
+fn char! Pty.readChar(&self) {
     char c;
     isz res = 0;
     while(res != 1) {
@@ -61,26 +72,30 @@ fn char! Pty.read_key(&self) {
             logger::printfn("can't read from master fd: %s", libc::errno());
             return PtyError.READ_ERROR?;
         }
-        if (res == -1 && libc::errno() == errno::EAGAIN) {
+        if (res == 0 || (res == -1 && libc::errno() == errno::EAGAIN)) {
             return PtyError.EMPTY?;
         }
     }
 
-    if (c == '\x1b') {
-        return PtyError.CONTROL?;
-//        char[3] seq;
-//        res = libc::read(self.master, &seq[0], 3);
-//        if (res != 1) {
-//            return '\x1b';
-//        }
-//
-//        res = libc::read(self.master, &seq[1], 3);
-//        if (res != 1) {
-//            return '\x1b';
-//        }
-    }
-
     return c;
+}
+
+fn DString! Pty.read(&self) {
+    DString res;
+    while (true) {
+        char! c = self.readChar();
+        if (catch err = c) {
+            if (err == PtyError.EMPTY) {
+                return res;
+            }
+            return err?;
+        }
+
+        // FIXME - don't skip
+        if (c < 256 && c != '\x1B' && c != '\x1b' && c != '\r') {
+            res.append_char(c);
+        }
+    }
 }
 
 fn void! Pty.write(&self, ZString cmd) {
@@ -94,6 +109,7 @@ fn void! Pty.write(&self, ZString cmd) {
         }
         written += res;
     }
+    logger::printfn("successfult written: %s", cmd);
 
     return;
 }
@@ -149,7 +165,7 @@ const int F_SETFD = 2;
 const int F_GETFL = 3;
 const int F_SETFL = 4;
 
-fn void! open() {
+fn Pty! open() {
     Allocator allocator = allocator::heap();
 
     Fd master;
@@ -159,7 +175,7 @@ fn void! open() {
     if (pid == -1) {
         logger::printfn("can't fork pty");
         io::printfn("error");
-        return;
+        return PtyError.FORK_ERROR?;
     }
 
     // child
@@ -178,60 +194,61 @@ fn void! open() {
 
         thread::sleep(time::SEC);
         logger::printfn("[SLAVE] i can't be here");
-
-        return;
     }
 
     Pty pty;
     pty.init(master)!;
 
-    thread::sleep(2*time::SEC);
-    DString shell_init;
-    while (true) {
-        char! c = pty.read_key();
-        if (catch err = c) {
-            if (err == PtyError.EMPTY) {
-                logger::printfn("nothing to read");
-                break;
-            } else if (err == PtyError.CONTROL) {
-                continue;
-            } else {
-                return err?;
-            }
-        }
-        switch (c) {
-            case Key.UP.code:
-            // todo
-            default:
-            shell_init.append_char(c);
-        }
-    }
-    logger::printf("%s", shell_init);
+   // thread::sleep(2*time::SEC);
+   // DString shell_init;
+   // defer shell_init.free();
+   // while FOO: (true) {
+   //     char! c = pty.read_key();
+   //     if (catch err = c) {
+   //         switch (err) {
+   //             case PtyError.EMPTY:
+   //                 break FOO;
+   //             case PtyError.CONTROL:
+   //                 continue;
+   //             default:
+   //                 return err?;
+   //         }
+   //     }
+   //     switch ((char)c) {
+   //         case Key.UP.code:
+   //             // todo
+   //         default:
+   //             shell_init.append_char(c);
+   //     }
+   // }
+   // logger::printf("%s", shell_init);
 
-    // write
-    pty.write("ls -lah\n")!;
+   // // write
+   // pty.write("ls -lah\n")!;
 
-    thread::sleep(2*time::SEC);
+   // thread::sleep(2*time::SEC);
 
-    DString cmd_res;
-    while (true) {
-        char! c = pty.read_key();
-        if (catch err = c) {
-            if (err == PtyError.EMPTY) {
-                logger::printfn("nothing to read");
-                break;
-            } else if (err == PtyError.CONTROL) {
-                continue;
-            } else {
-                return err?;
-            }
-        }
-        switch (c) {
-            case Key.UP.code:
-            // todo
-            default:
-            cmd_res.append_char(c);
-        }
-    }
-    logger::printf("%s", cmd_res);
+   // DString cmd_res;
+   // defer cmd_res.free();
+   // while (true) {
+   //     char! c = pty.read_key();
+   //     if (catch err = c) {
+   //         if (err == PtyError.EMPTY) {
+   //             logger::printfn("nothing to read");
+   //             break;
+   //         } else if (err == PtyError.CONTROL) {
+   //             continue;
+   //         } else {
+   //             return err?;
+   //         }
+   //     }
+   //     switch (c) {
+   //         case Key.UP.code:
+   //         // todo
+   //         default:
+   //         cmd_res.append_char(c);
+   //     }
+   // }
+    // logger::printf("%s", cmd_res);
+    return pty;
 }

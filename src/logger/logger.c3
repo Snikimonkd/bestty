@@ -18,14 +18,14 @@ fn void close() {
 }
 
 fn void printfn(String format, args...) {
-    if (catch excuse = io::fprintfn(&out, format, args)) {
-        io::printfn("can't write to log: %s", excuse);
+    if (catch err = io::fprintfn(&out, format, ...args)) {
+        io::printfn("can't write to log: %s, err: %s, %s", format, err, args);
     }
 }
 
 fn void printf(String format, args...) {
-    if (catch excuse = io::fprintf(&out, format, args)) {
-        io::printfn("can't write to log: %s", excuse);
+    if (catch err = io::fprintf(&out, format, ...args)) {
+        io::printfn("can't write to log: %s, err: %s, %s", format, err, args);
     }
 }
 
