@@ -8,7 +8,7 @@ import window;
 import parser;
 
 fn int main(String[] args) {
-    ZString tmp = "hello world\x1b";
+    ZString tmp = "hello\n world\x1b";
 
     parser::Parser p;
     p.init();
@@ -24,9 +24,12 @@ fn int main(String[] args) {
             case PRINT:
                 io::printf("%c", action.data.print);
             case NONE:
-                io::printfn("none");
+                continue;
+            case EXECUTE:
+                io::printfn("\nexecute %x", action.data.execute);
+                continue;
             default:
-                io::printfn("unknwon action: %s", action.type);
+                io::printfn("\nunknwon action: %s", action.type);
                 return -1;
         }
     }

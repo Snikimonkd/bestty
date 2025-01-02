@@ -1,7 +1,12 @@
 run:
 	c3c run
 
-b:
-	c3c compile
+t:
+	c3c test
 
-#	c3c compile -l utils.h ./src/main.c3
+b:
+	c3c build
+
+debug:
+	c3c build -o out
+
