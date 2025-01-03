@@ -1,29 +1,31 @@
-module window;
+module terminal;
 
 import raylib5::rl;
 
 import pty;
+import parser;
 
 import std::io;
 import std::ascii;
 
 const BUF_SIZE = 32;
 
-struct Window {
+struct Terminal {
     int w;
     int h;
 
     pty::Pty pty;
+    parser::Parser parser;
 
     DString scrollback;
     DString cmd;
 }
 
-fn Window init(pty::Pty pty) {
-    return Window{ .w = 800, .h = 600, .pty = pty };
+fn Terminal init(pty::Pty pty, parser::Parser parser) {
+    return Terminal{ .w = 800, .h = 600, .pty = pty, .parser = parser };
 }
 
-fn void! Window.run(&self) {
+fn void! Terminal.run(&self) {
     rl::initWindow(self.w, self.h, "Bestty");
     defer rl::closeWindow();
 
@@ -48,13 +50,15 @@ fn void! Window.run(&self) {
 
         // print results
         rl::drawRectangleRec(output, rl::BLACK);
+        // TODO: handle \0
+        self.scrollback.replace("\0", "");
         rl::drawText(self.scrollback.zstr_view(), (int)output.x+5, (int)output.y+3, 10, rl::WHITE);
 
         rl::endDrawing();
     }
 }
 
-fn void! Window.handle_keys(&self) {
+fn void! Terminal.handle_keys(&self) {
     int key = rl::getKeyPressed();
     if (key > 0) {
         // FIXME - handle all?
@@ -65,23 +69,28 @@ fn void! Window.handle_keys(&self) {
     }
 
     if (rl::isKeyPressed(rl::KEY_BACKSPACE)) {
-        self.cmd.chop(self.cmd.len() - 1);
+        self.cmd.chop(max(0, self.cmd.len() - 1));
     }
 
     if (rl::isKeyPressed(rl::KEY_ENTER)) {
         self.cmd.append_char('\n');
+        // TODO: here is a \0 at the end
         self.pty.write(self.cmd.zstr_view())!!;
         self.cmd.chop(0);
     }
 }
 
-fn void! Window.read_from_pty(&self) {
-    char! c = self.pty.read_char();
-    if (catch err = c) {
+fn void! Terminal.read_from_pty(&self) {
+    DString! tmp = self.pty.read();
+    if (catch err = tmp) {
         if (err != pty::PtyError.EMPTY) {
             return err?;
         }
-    } else {
-        self.scrollback.append_char(c);
+        return;
     }
+
+    // TODO: parser comes into play
+
+    self.scrollback.append_string(tmp);
+    tmp.free();
 }

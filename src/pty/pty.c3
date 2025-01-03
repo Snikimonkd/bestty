@@ -3,17 +3,15 @@ module pty;
 import logger;
 
 import std::io;
-import std::os;
 import std::os::env;
 import std::net::os;
+import std::net;
 import std::time;
 import std::thread;
-
-import chan;
-
+import std::collections::list;
 import libc;
 
-const usz BUF_SIZE = 128;
+const usz BUF_SIZE = 1024;
 
 fault PtyError {
     EXEC_SHELL_ERROR,
@@ -56,19 +54,6 @@ struct Winsize {
     ushort ws_xpixel;	/* horizontal size, pixels */
     ushort ws_ypixel;	/* vertical size, pixels */
 }
-
-// struct FdSet {
-//     CInt[32] fds_bits;
-// }
-//
-// struct Timeval {
-//     long    tv_sec;
-//     long    tv_usec;
-// }
-
-// extern fn void fd_set(CInt fd, FdSet *set) @extern("__darwin_fd_set");
-// extern fn void fd_zero(FdSet *set, isz s) @extern("bzero");
-// extern fn int fd_isset(CInt fd, FdSet *set) @extern("FD_ISSET");
 
 extern fn CInt forkpty(CInt *amaster, char *name, Termios *termp, Winsize *winp);
 extern fn CInt execvp(ZString path, ZString*[] argv);
@@ -128,42 +113,48 @@ fn Pty! init() {
     return { .master = master };
 }
 
-fn char! Pty.read_char(&self) {
-    char c;
-    isz res = 0;
-    while(res != 1) {
-        res = libc::read(self.master, &c, 1);
-        if (res == -1 && libc::errno() != errno::EAGAIN) {
-            logger::printfn("can't read from master fd: %s", libc::errno());
-            return PtyError.READ_ERROR?;
-        }
-        if (res == 0 || (res == -1 && libc::errno() == errno::EAGAIN)) {
-            return PtyError.EMPTY?;
-        }
+fn DString! Pty.read(&self) {
+    DString res;
+
+    Poll[] polls = {
+        {
+            .socket = (NativeSocket)self.master,
+            .events = net::SUBSCRIBE_READ,
+        },
+    };
+
+    ulong n = net::poll(polls, 0)!!;
+    if (n != 1 || polls[0].revents != net::POLL_EVENT_READ) {
+//        io::printfn("read poll res n: %s, revents: %s", n, polls[0].revents);
+        return PtyError.EMPTY?;
     }
 
-    return c;
+    char[BUF_SIZE] buf;
+    isz s = libc::read(self.master, &buf, BUF_SIZE);
+    if (s == -1 && libc::errno() != errno::EAGAIN) {
+        io::printfn("error while reading errno: %s", libc::errno());
+        return PtyError.READ_ERROR?;
+    }
+
+    res.append_chars((String)buf[0..s]);
+    return res;
 }
 
-// fn DString! Pty.read(&self) {
-//     DString res;
-//     while (true) {
-//         char! c = self.read_char();
-//         if (catch err = c) {
-//             if (err == PtyError.EMPTY) {
-//                 return res;
-//             }
-//             return err?;
-//         }
-//
-//         // FIXME - don't skip
-//         if (c < 256 && c != '\x1B' && c != '\x1b' && c != '\r') {
-//             res.append_char(c);
-//         }
-//     }
-// }
-
 fn void! Pty.write(&self, ZString cmd) {
+    Poll[] polls = {
+        {
+            .socket = (NativeSocket)self.master,
+            .events = net::SUBSCRIBE_WRITE,
+        },
+    };
+
+    ulong n = net::poll(polls, 0)!!;
+    if (n != 1 || polls[0].revents != net::POLL_EVENT_WRITE) {
+        io::printfn("write poll res n: %s, revents: %s", n, polls[0].revents);
+        return PtyError.EMPTY?;
+    }
+
+
     isz written = 0;
     isz len = cmd.char_len();
     while (written < len) {
@@ -172,6 +163,7 @@ fn void! Pty.write(&self, ZString cmd) {
             logger::printfn("can't write to master fd: %s", libc::errno());
             return PtyError.WRITE_ERROR?;
         }
+        logger::printfn("written some: %s", res);
         written += res;
     }
     logger::printfn("successfult written: %s", cmd);

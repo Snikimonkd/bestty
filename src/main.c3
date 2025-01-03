@@ -8,14 +8,11 @@ import logger;
 import pty;
 import parser;
 import chan;
-import window;
+import terminal;
 
 fn int main(String[] args) {
     logger::open()!!;
     defer logger::close();
-
-    thread::ConditionVariable cond;
-    cond.init()!!;
 
     pty::Pty! pty = pty::init();
     if (catch err = pty) {
@@ -23,24 +20,10 @@ fn int main(String[] args) {
         return -1;
     }
 
-    window::Window window = window::init(pty);
-
     parser::Parser parser = {};
 
-    window.run()!!;
-
-   // ZString tmp = "hello\n world\x1b";
-
-   // parser::Parser p;
-
-   // for (int i = 0; i < tmp.char_len(); i++) {
-
-   // }
-
-   // if (catch err = window::run()) {
-   //     io::printfn("run window err: %s", err);
-   //     return -1;
-   // }
+    terminal::Terminal terminal = terminal::init(pty, parser);
+    terminal.run()!!;
 
     return 0;
 }
