@@ -8,5 +8,5 @@ b:
 	c3c build
 
 debug:
-	c3c build -o out
+	c3c build
 

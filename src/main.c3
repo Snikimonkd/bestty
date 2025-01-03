@@ -1,55 +1,46 @@
 module bestty;
 
 import std::io;
+import std::thread;
+import std::time;
+import logger;
 
 import pty;
-import logger;
-import window;
 import parser;
+import chan;
+import window;
 
 fn int main(String[] args) {
-    ZString tmp = "hello\n world\x1b";
+    logger::open()!!;
+    defer logger::close();
 
-    parser::Parser p;
-    p.init();
+    thread::ConditionVariable cond;
+    cond.init()!!;
 
-    for (int i = 0; i < tmp.char_len(); i++) {
-        parser::Action! action = p.next(tmp[i]);
-        if (catch err = action) {
-            io::printfn("err: %s", err);
-            return -1;
-        }
-
-        switch (action.type) {
-            case PRINT:
-                io::printf("%c", action.data.print);
-            case NONE:
-                continue;
-            case EXECUTE:
-                io::printfn("\nexecute %x", action.data.execute);
-                continue;
-            default:
-                io::printfn("\nunknwon action: %s", action.type);
-                return -1;
-        }
+    pty::Pty! pty = pty::init();
+    if (catch err = pty) {
+        io::printfn("can't init pty: %s", err);
+        return -1;
     }
+
+    window::Window window = window::init(pty);
+
+    parser::Parser parser = {};
+
+    window.run()!!;
+
+   // ZString tmp = "hello\n world\x1b";
+
+   // parser::Parser p;
+
+   // for (int i = 0; i < tmp.char_len(); i++) {
+
+   // }
+
+   // if (catch err = window::run()) {
+   //     io::printfn("run window err: %s", err);
+   //     return -1;
+   // }
+
     return 0;
-//    if (catch err = logger::open()) {
-//        io::printfn("init logger err: %s", err);
-//        return -1;
-//    }
-//    defer logger::close();
-//
-//    pty::Pty! pty = pty::open();
-//    if (catch err = pty) {
-//        io::printfn("open err: %s", err);
-//        return -1;
-//    }
-//
-//     if (catch err = window::run(pty)) {
-//         io::printfn("run window err: %s", err);
-//         return -1;
-//     }
-//
-//     return 0;
 }

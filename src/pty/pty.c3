@@ -9,6 +9,8 @@ import std::net::os;
 import std::time;
 import std::thread;
 
+import chan;
+
 import libc;
 
 const usz BUF_SIZE = 128;
@@ -24,92 +26,7 @@ fault PtyError {
     EMPTY,
 }
 
-
 def Fd = CInt;
-
-struct Pty {
-    Fd master;
-}
-
-fn void! Pty.init(&self, Fd master) {
-    int flags = fcntl(master, F_GETFL, 0);
-    if (flags == -1) {
-        logger::printfn("can't get master fd flags: %s", libc::errno());
-        return PtyError.GET_FLAGS_ERROR?;
-    }
-
-    int a = fcntl(master, F_SETFL, flags | os::O_NONBLOCK);
-    if (a == -1) {
-        logger::printfn("can't set master fd flags: %s", libc::errno());
-        return PtyError.SET_FLAGS_ERROR?;
-    }
-
-    *self = { .master = master };
-    return;
-}
-
-fn void prt(char* str, int len) {
-    logger::printfn("################");
-    for (int i = 0; i < len; i++) {
-        logger::printf("%c",str[i]);
-    }
-    logger::printfn("\n################");
-    for (int i = 0; i < len; i++) {
-        logger::printf("%s,",str[i]);
-    }
-    logger::printfn("\n################");
-}
-
-fn char! Pty.readChar(&self) {
-    char c;
-    isz res = 0;
-    while(res != 1) {
-        res = libc::read(self.master, &c, 1);
-        if (res == -1 && libc::errno() != errno::EAGAIN) {
-            logger::printfn("can't read from master fd: %s", libc::errno());
-            return PtyError.READ_ERROR?;
-        }
-        if (res == 0 || (res == -1 && libc::errno() == errno::EAGAIN)) {
-            return PtyError.EMPTY?;
-        }
-    }
-
-    return c;
-}
-
-fn DString! Pty.read(&self) {
-    DString res;
-    while (true) {
-        char! c = self.readChar();
-        if (catch err = c) {
-            if (err == PtyError.EMPTY) {
-                return res;
-            }
-            return err?;
-        }
-
-        // FIXME - don't skip
-        if (c < 256 && c != '\x1B' && c != '\x1b' && c != '\r') {
-            res.append_char(c);
-        }
-    }
-}
-
-fn void! Pty.write(&self, ZString cmd) {
-    isz written = 0;
-    isz len = cmd.char_len();
-    while (written < len) {
-        isz res = libc::write(self.master, (char*)cmd[written:len], len-written);
-        if (res == -1) {
-            logger::printfn("can't write to master fd: %s", libc::errno());
-            return PtyError.WRITE_ERROR?;
-        }
-        written += res;
-    }
-    logger::printfn("successfult written: %s", cmd);
-
-    return;
-}
 
 struct Termios {
     //    tcflag_t        c_iflag;
@@ -162,7 +79,11 @@ const int F_SETFD = 2;
 const int F_GETFL = 3;
 const int F_SETFL = 4;
 
-fn Pty! open() {
+struct Pty {
+    Fd master;
+}
+
+fn Pty! init() {
     Allocator allocator = allocator::heap();
 
     Fd master;
@@ -171,7 +92,6 @@ fn Pty! open() {
     int pid = forkpty(&master, null, null, &ws);
     if (pid == -1) {
         logger::printfn("can't fork pty");
-        io::printfn("error");
         return PtyError.FORK_ERROR?;
     }
 
@@ -193,59 +113,69 @@ fn Pty! open() {
         logger::printfn("[SLAVE] i can't be here");
     }
 
-    Pty pty;
-    pty.init(master)!;
+    int flags = fcntl(master, F_GETFL, 0);
+    if (flags == -1) {
+        logger::printfn("can't get master fd flags: %s", libc::errno());
+        return PtyError.GET_FLAGS_ERROR?;
+    }
 
-   // thread::sleep(2*time::SEC);
-   // DString shell_init;
-   // defer shell_init.free();
-   // while FOO: (true) {
-   //     char! c = pty.read_key();
-   //     if (catch err = c) {
-   //         switch (err) {
-   //             case PtyError.EMPTY:
-   //                 break FOO;
-   //             case PtyError.CONTROL:
-   //                 continue;
-   //             default:
-   //                 return err?;
-   //         }
-   //     }
-   //     switch ((char)c) {
-   //         case Key.UP.code:
-   //             // todo
-   //         default:
-   //             shell_init.append_char(c);
-   //     }
-   // }
-   // logger::printf("%s", shell_init);
+    int a = fcntl(master, F_SETFL, flags | os::O_NONBLOCK);
+    if (a == -1) {
+        logger::printfn("can't set master fd flags: %s", libc::errno());
+        return PtyError.SET_FLAGS_ERROR?;
+    }
 
-   // // write
-   // pty.write("ls -lah\n")!;
-
-   // thread::sleep(2*time::SEC);
-
-   // DString cmd_res;
-   // defer cmd_res.free();
-   // while (true) {
-   //     char! c = pty.read_key();
-   //     if (catch err = c) {
-   //         if (err == PtyError.EMPTY) {
-   //             logger::printfn("nothing to read");
-   //             break;
-   //         } else if (err == PtyError.CONTROL) {
-   //             continue;
-   //         } else {
-   //             return err?;
-   //         }
-   //     }
-   //     switch (c) {
-   //         case Key.UP.code:
-   //         // todo
-   //         default:
-   //         cmd_res.append_char(c);
-   //     }
-   // }
-    // logger::printf("%s", cmd_res);
-    return pty;
+    return { .master = master };
 }
+
+fn char! Pty.read_char(&self) {
+    char c;
+    isz res = 0;
+    while(res != 1) {
+        res = libc::read(self.master, &c, 1);
+        if (res == -1 && libc::errno() != errno::EAGAIN) {
+            logger::printfn("can't read from master fd: %s", libc::errno());
+            return PtyError.READ_ERROR?;
+        }
+        if (res == 0 || (res == -1 && libc::errno() == errno::EAGAIN)) {
+            return PtyError.EMPTY?;
+        }
+    }
+
+    return c;
+}
+
+// fn DString! Pty.read(&self) {
+//     DString res;
+//     while (true) {
+//         char! c = self.read_char();
+//         if (catch err = c) {
+//             if (err == PtyError.EMPTY) {
+//                 return res;
+//             }
+//             return err?;
+//         }
+//
+//         // FIXME - don't skip
+//         if (c < 256 && c != '\x1B' && c != '\x1b' && c != '\r') {
+//             res.append_char(c);
+//         }
+//     }
+// }
+
+fn void! Pty.write(&self, ZString cmd) {
+    isz written = 0;
+    isz len = cmd.char_len();
+    while (written < len) {
+        isz res = libc::write(self.master, (char*)cmd[written:len], len-written);
+        if (res == -1) {
+            logger::printfn("can't write to master fd: %s", libc::errno());
+            return PtyError.WRITE_ERROR?;
+        }
+        written += res;
+    }
+    logger::printfn("successfult written: %s", cmd);
+
+    return;
+}
+
