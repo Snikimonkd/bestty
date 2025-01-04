@@ -18,14 +18,16 @@ fn void close() {
 }
 
 fn void printfn(String format, args...) {
+    io::printfn(format, ...args);
     if (catch err = io::fprintfn(&out, format, ...args)) {
-        io::printfn("can't write to log: %s, err: %s, %s", format, err, args);
+        io::printfn("logger printfn error: err: %s", err);
     }
 }
 
 fn void printf(String format, args...) {
+    io::printf(format, ...args);
     if (catch err = io::fprintf(&out, format, ...args)) {
-        io::printfn("can't write to log: %s, err: %s, %s", format, err, args);
+        io::printfn("logger printf error: err: %s", err);
     }
 }
 

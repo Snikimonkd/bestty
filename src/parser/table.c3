@@ -48,7 +48,7 @@ fn void TransitionTable.set_one(&self, char c, State prev, State next, Action ac
 }
 
 fn void TransitionTable.set_many(&self, char from, char to, State prev, State next, Action action) {
-    for (char c = from; c < to; c++) {
+    for (char c = from; c <= to; c++) {
         (*self)[(int)c][(int)prev.ordinal] = { .state = next, .action = action };
     }
 }
@@ -87,7 +87,9 @@ fn void build_table() @init {
 
     // from GROUND
     {
-        // to GROUND t.set_one(0x19, GROUND, GROUND, EXECUTE); t.set_many(0x00, 0x17, GROUND, GROUND, EXECUTE);
+        // to GROUND
+        t.set_many(0x00, 0x17, GROUND, GROUND, EXECUTE);
+        t.set_one(0x19, GROUND, GROUND, EXECUTE);
         t.set_many(0x1C, 0x1F, GROUND, GROUND, EXECUTE);
         t.set_many(0x20, 0x7F, GROUND, GROUND, PRINT);
     }

@@ -2,7 +2,6 @@ module pty;
 
 import logger;
 
-import std::io;
 import std::os::env;
 import std::net::os;
 import std::net;
@@ -17,6 +16,7 @@ fault PtyError {
     EXEC_SHELL_ERROR,
     FORK_ERROR,
     WRITE_ERROR,
+    PTY_NOT_READY,
     READ_ERROR,
     GET_FLAGS_ERROR,
     SET_FLAGS_ERROR,
@@ -73,6 +73,7 @@ fn Pty! init() {
 
     Fd master;
     Winsize ws = Winsize{};
+    // TODO: termios
 
     int pid = forkpty(&master, null, null, &ws);
     if (pid == -1) {
@@ -83,11 +84,10 @@ fn Pty! init() {
     // child
     if (pid == 0) {
 //        String sh = env::get_var("SHELL", allocator)!;
-//        defer (void)free(sh);
-//        ZString*[] args = {&&((ZString)sh), null};
-
-        env::set_var("BASH_SILENCE_DEPRECATION_WARNING", "1", true);
-        ZString*[] tmp = {&&((ZString)"sh"), null};
+//        defer free(sh);
+//        ZString*[] tmp = {&&((ZString)sh), null};
+//        env::set_var("BASH_SILENCE_DEPRECATION_WARNING", "1", true);
+        ZString*[] tmp = {&&((ZString)"bash"), null};
         CInt res = execvp(*tmp[0], tmp);
         if (res == -1) {
             logger::printfn("[SLAVE] can't exec shell");
@@ -125,17 +125,28 @@ fn DString! Pty.read(&self) {
 
     ulong n = net::poll(polls, 0)!!;
     if (n != 1 || polls[0].revents != net::POLL_EVENT_READ) {
-//        io::printfn("read poll res n: %s, revents: %s", n, polls[0].revents);
+//        logger::printfn("read poll res n: %s, revents: %s", n, polls[0].revents);
         return PtyError.EMPTY?;
     }
 
     char[BUF_SIZE] buf;
     isz s = libc::read(self.master, &buf, BUF_SIZE);
     if (s == -1 && libc::errno() != errno::EAGAIN) {
-        io::printfn("error while reading errno: %s", libc::errno());
+        logger::printfn("error while reading errno: %s", libc::errno());
         return PtyError.READ_ERROR?;
     }
+    if (s == 0) {
+        return PtyError.EMPTY?;
+    }
 
+    for (int i = 0; i < s; i++) {
+        logger::printf("0x%x,", buf[i]);
+    }
+    logger::printf("\n");
+    for (int i = 0; i < s; i++) {
+        logger::printf("%c,", buf[i]);
+    }
+    logger::printf("\n");
     res.append_chars((String)buf[0..s]);
     return res;
 }
@@ -150,8 +161,8 @@ fn void! Pty.write(&self, ZString cmd) {
 
     ulong n = net::poll(polls, 0)!!;
     if (n != 1 || polls[0].revents != net::POLL_EVENT_WRITE) {
-        io::printfn("write poll res n: %s, revents: %s", n, polls[0].revents);
-        return PtyError.EMPTY?;
+        logger::printfn("write poll res n: %s, revents: %s", n, polls[0].revents);
+        return PtyError.PTY_NOT_READY?;
     }
 
 
@@ -163,7 +174,6 @@ fn void! Pty.write(&self, ZString cmd) {
             logger::printfn("can't write to master fd: %s", libc::errno());
             return PtyError.WRITE_ERROR?;
         }
-        logger::printfn("written some: %s", res);
         written += res;
     }
     logger::printfn("successfult written: %s", cmd);

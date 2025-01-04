@@ -16,8 +16,8 @@ struct Terminal {
 
     pty::Pty pty;
     parser::Parser parser;
+    parser::Scrollback scrollback;
 
-    DString scrollback;
     DString cmd;
 }
 
@@ -34,7 +34,6 @@ fn void! Terminal.run(&self) {
 
     rl::setTargetFPS(60);
 
-    defer self.scrollback.free();
     defer self.cmd.free();
 
     while (!rl::windowShouldClose()) {
@@ -50,9 +49,7 @@ fn void! Terminal.run(&self) {
 
         // print results
         rl::drawRectangleRec(output, rl::BLACK);
-        // TODO: handle \0
-        self.scrollback.replace("\0", "");
-        rl::drawText(self.scrollback.zstr_view(), (int)output.x+5, (int)output.y+3, 10, rl::WHITE);
+        rl::drawText(self.scrollback.to_print().zstr_view(), (int)output.x+5, (int)output.y+3, 10, rl::WHITE);
 
         rl::endDrawing();
     }
@@ -74,8 +71,15 @@ fn void! Terminal.handle_keys(&self) {
 
     if (rl::isKeyPressed(rl::KEY_ENTER)) {
         self.cmd.append_char('\n');
-        // TODO: here is a \0 at the end
-        self.pty.write(self.cmd.zstr_view())!!;
+        // TODO: here is a \0 at the end that breaks reading in the future
+        if (catch err = self.pty.write(self.cmd.zstr_view())) {
+            if (err != pty::PtyError.PTY_NOT_READY) {
+                return err?;
+            }
+            if (err == pty::PtyError.PTY_NOT_READY) {
+                return;
+            }
+        }
         self.cmd.chop(0);
     }
 }
@@ -90,7 +94,13 @@ fn void! Terminal.read_from_pty(&self) {
     }
 
     // TODO: parser comes into play
+    foreach (char c : tmp) {
+        parser::PtyAction! action = self.parser.next(c);
+        if (catch err = action) {
+            return err?;
+        }
 
-    self.scrollback.append_string(tmp);
+        self.scrollback.handle(action)!!;
+    }
     tmp.free();
 }

@@ -20,7 +20,7 @@ fn int main(String[] args) {
         return -1;
     }
 
-    parser::Parser parser = {};
+    parser::Parser parser = { .state = parser::State.GROUND };
 
     terminal::Terminal terminal = terminal::init(pty, parser);
     terminal.run()!!;
