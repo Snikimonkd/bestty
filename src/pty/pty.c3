@@ -86,7 +86,8 @@ fn Pty! init() {
 //        String sh = env::get_var("SHELL", allocator)!;
 //        defer free(sh);
 //        ZString*[] tmp = {&&((ZString)sh), null};
-//        env::set_var("BASH_SILENCE_DEPRECATION_WARNING", "1", true);
+        env::set_var("BASH_SILENCE_DEPRECATION_WARNING", "1", true);
+        env::set_var("PS1", "$ ", true);
         ZString*[] tmp = {&&((ZString)"bash"), null};
         CInt res = execvp(*tmp[0], tmp);
         if (res == -1) {
@@ -139,15 +140,7 @@ fn DString! Pty.read(&self) {
         return PtyError.EMPTY?;
     }
 
-    for (int i = 0; i < s; i++) {
-        logger::printf("0x%x,", buf[i]);
-    }
-    logger::printf("\n");
-    for (int i = 0; i < s; i++) {
-        logger::printf("%c,", buf[i]);
-    }
-    logger::printf("\n");
-    res.append_chars((String)buf[0..s]);
+    res.append_chars((String)buf[0..s-1]);
     return res;
 }
 

@@ -22,6 +22,9 @@ fn void! Scrollback.handle(&self, PtyAction action) {
             return;
         case NONE:
             return;
+        case EXECUTE:
+            self.handle_execute(action.payload.execute)!!;
+            return;
         default:
             // TODO for now just ignore evrething
             logger::printfn("unknown scrollback action: %s", action.type);
@@ -33,4 +36,16 @@ fn void! Scrollback.handle(&self, PtyAction action) {
 // todo:  maybe handle the size of window here?
 fn DString Scrollback.to_print(&self) {
     return self.buf;
+}
+
+fn void! Scrollback.handle_execute(&self, char c) {
+    switch (c) {
+        case '\n':
+            self.buf.append_char('\n');
+        case '\t':
+            self.buf.append_char('\t');
+        default:
+            logger::printfn("unknown execute action: %d", c);
+            return;
+    }
 }
