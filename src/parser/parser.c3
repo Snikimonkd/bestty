@@ -41,11 +41,6 @@ struct PtyAction {
 }
 
 fn PtyAction! Parser.next(&self, char c) {
-    // TODO:: wtf???
-    if (c >= 128 && c < 256) {
-        logger::printfn("got big char: %d", c);
-        return { .type = NONE };
-    }
     Transition transition = t[c][self.state.ordinal];
     logger::printfn("from: %s with char: %d to: %s, with action: %s", self.state, c, transition.state, transition.action);
 
@@ -85,7 +80,6 @@ fn void! Parser.entry_new_state(&self, State new_state) {
         case ESCAPE:
             self.intermediates_idx = 0;
             return;
-            // aaaaaaaaaaaaaaaaaaaaaaaaaaaa
         case CSI_ENTRY:
             self.intermediates_idx = 0;
             self.param = 0;

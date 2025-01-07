@@ -7,7 +7,10 @@
     "lib"
   ],
   "dependencies": [
-    "raylib5"
+    "raylib5",
+    "opengl",
+    "glfw",
+    "freetype"
   ],
   "authors": [
     "Snikimonkd"

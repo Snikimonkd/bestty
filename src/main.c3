@@ -11,19 +11,21 @@ import chan;
 import terminal;
 
 fn int main(String[] args) {
-    logger::open()!!;
-    defer logger::close();
+//    logger::open()!!;
+//    defer logger::close();
+//
+//    pty::Pty! pty = pty::init();
+//    if (catch err = pty) {
+//        io::printfn("can't init pty: %s", err);
+//        return -1;
+//    }
+//
+//    parser::Parser parser = { .state = parser::State.GROUND };
+//
+//    terminal::Terminal terminal = terminal::init(pty, parser);
+//    terminal.run()!!;
 
-    pty::Pty! pty = pty::init();
-    if (catch err = pty) {
-        io::printfn("can't init pty: %s", err);
-        return -1;
-    }
+    return terminal::tmp();
 
-    parser::Parser parser = { .state = parser::State.GROUND };
-
-    terminal::Terminal terminal = terminal::init(pty, parser);
-    terminal.run()!!;
-
-    return 0;
+    //return 0;
 }
