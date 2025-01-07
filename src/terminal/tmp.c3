@@ -6,19 +6,43 @@ import freetype;
 import logger;
 
 fn int tmp() {
+    CInt err;
     ft::Library library;
-    int err = ft::initFreeType(&library);
+    defer ft::doneFreeType(library);
+    err = ft::initFreeType(&library);
     if (err != ft::Error.OK.code) {
         logger::printfn("inti free type err: %s", err);
         return -1;
     }
 
-    ft::Face aface;
-    err = ft::newFace(library, "/Users/slukash/Library/Fonts/Iosevka-Medium.ttf", 0, &aface);
-    if (err == ft::Error.UNKNOWN_FILE_FORMAT.code) {
-        logger::printfn("unknown file format");
+    ft::Face face;
+    defer ft::doneFace(face);
+    err = ft::newFace(library, "/Users/slukash/Library/Fonts/Iosevka-Medium.ttf", 0, &face);
+    if (err != ft::Error.OK.code) {
+        logger::printfn("can't load font: %s", err);
         return -1;
-    } else if (err != ft::Error.OK.code) {
+    } 
+
+//    ft::UInt idx = ft::getCharIndex(face, 'h');
+//    if (idx == 0) {
+//        logger::printfn("can't get char index: %s", err);
+//        return -1;
+//    }
+//
+//    err = ft::loadGlyph(face, idx, 0);
+//    if (err != ft::Error.OK.code) {
+//        logger::printfn("can't load glyph: %s", err);
+//        return -1;
+//    }
+    
+    err = ft::setPixelSizes(face, 0, 48); 
+    if (err != ft::Error.OK.code) {
+        logger::printfn("can't set pixel sizes: %s", err);
+        return -1;
+    }
+
+    if(ft::loadChar(face, 'X', 1<<2)) {
+        logger::printfn("can't load char: %s", err);
         return -1;
     }
 

@@ -1,5 +1,6 @@
 module freetype::ft;
-enum Error : int (int code, String description) {
+
+enum Error : int (CInt code, String description) {
 
     /* generic errors */
 
@@ -128,9 +129,154 @@ enum Error : int (int code, String description) {
     CORRUPTED_FONT_GLYPHS = {0xBA,"Font glyphs corrupted or missing fields" },
 }
 
-def Library = void*;
-fn int initFreeType(Library* library) @extern("FT_Init_FreeType");
+// #define FT_LOAD_DEFAULT                     0x0
+// #define FT_LOAD_NO_SCALE                     ( 1L << 0 )
+// #define FT_LOAD_NO_HINTING                   ( 1L << 1 )
+// #define FT_LOAD_RENDER                       ( 1L << 2 )
+// #define FT_LOAD_NO_BITMAP                    ( 1L << 3 )
+// #define FT_LOAD_VERTICAL_LAYOUT              ( 1L << 4 )
+// #define FT_LOAD_FORCE_AUTOHINT               ( 1L << 5 )
+// #define FT_LOAD_CROP_BITMAP                  ( 1L << 6 )
+// #define FT_LOAD_PEDANTIC                     ( 1L << 7 )
+// #define FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH  ( 1L << 9 )
+// #define FT_LOAD_NO_RECURSE                   ( 1L << 10 )
+// #define FT_LOAD_IGNORE_TRANSFORM             ( 1L << 11 )
+// #define FT_LOAD_MONOCHROME                   ( 1L << 12 )
+// #define FT_LOAD_LINEAR_DESIGN                ( 1L << 13 )
+// #define FT_LOAD_NO_AUTOHINT                  ( 1L << 15 )
+//   /* Bits 16-19 are used by `FT_LOAD_TARGET_` */
+// #define FT_LOAD_COLOR                        ( 1L << 20 )
+// #define FT_LOAD_COMPUTE_METRICS              ( 1L << 21 )
+// #define FT_LOAD_BITMAP_METRICS_ONLY          ( 1L << 22 )
+// 
+//   /* */
+// 
+//   /* used internally only by certain font drivers */
+// #define FT_LOAD_ADVANCE_ONLY                 ( 1L << 8 )
+// #define FT_LOAD_SBITS_ONLY                   ( 1L << 14 )
 
-def Long = int;
-def Face = void*;
-fn int newFace(Library* library, ZString pathname, Long face_index, Face* aface) @extern("FT_New_Face");
+def Long = long; // FT_Long
+def Face = void*; // FT_Face
+def ULong = ulong; // FT_ULong
+def UInt = uint; // FT_UInt
+def Int32 = int; // FT_Int32
+def Int = int; // FT_Int32
+def String = void*; // FT_String
+def Library = void*; // FT_Library
+def Short = short; // FT_Short
+
+struct Bitmap {
+    CUInt rows;
+    CUInt width;
+    CInt             pitch;
+    CUInt*  buffer;
+    CUShort  num_grays;
+    CUInt   pixel_mode;
+    CUChar   palette_mode;
+    void*           palette;
+}
+
+struct GlyphSlotRec {
+    void*        library;
+    void*           face;
+    void*      next;
+    void*           glyph_index; /* new in 2.10; was reserved previously */
+    void*        generic;
+
+    void*  metrics;
+    void*          linearHoriAdvance;
+    void*          linearVertAdvance;
+    void*         advance;
+
+    void*   format;
+
+    Bitmap         bitmap;
+    void*            bitmap_left;
+    void*            bitmap_top;
+
+    void*        outline;
+
+    void*           num_subglyphs;
+    void*       subglyphs;
+
+    void*             control_data;
+    void*              control_len;
+
+    void*            lsb_delta;
+    void*            rsb_delta;
+
+    void*             other;
+
+    void*  internal;
+}
+
+struct FaceRec {
+    Long           num_faces;
+    Long           face_index;
+
+    Long           face_flags;
+    Long           style_flags;
+
+    Long           num_glyphs;
+
+    String*        family_name;
+    String*        style_name;
+
+    Int            num_fixed_sizes;
+    void*   available_sizes;
+
+    Int            num_charmaps;
+    void*       charmaps;
+
+    void*        generic;
+
+    /*# The following member variables (down to `underline_thickness`) */
+    /*# are only relevant to scalable outlines; cf. @FT_Bitmap_Size    */
+    /*# for bitmap fonts.                                              */
+    void*           bbox;
+
+    void*         units_per_EM;
+    void*          ascender;
+    void*          descender;
+    void*          height;
+
+    Short          max_advance_width;
+    Short          max_advance_height;
+
+    Short          underline_position;
+    Short          underline_thickness;
+
+    void*      glyph;
+    void*           size;
+    void*        charmap;
+
+    /*@private begin */
+
+    void*         driver;
+    void*         memory;
+    void*         stream;
+
+    void*        sizes_list;
+
+    void*        autohint;   /* face-specific auto-hinter data */
+    void*             extensions; /* unused                         */
+
+    void*  internal;
+
+    /*@private end */
+}
+
+fn CInt initFreeType(Library* library) @extern("FT_Init_FreeType");
+fn CInt doneFreeType(Library library) @extern("FT_Done_FreeType");
+
+
+fn CInt newFace(Library* library, ZString pathname, Long face_index, Face* aface) @extern("FT_New_Face");
+fn CInt doneFace(Face face) @extern("FT_Done_Face");
+
+fn UInt getCharIndex(Face face, ULong charcode) @extern("FT_Get_Char_Index");
+
+fn CInt loadGlyph(Face face, UInt glyph_index, Int32 load_flags) @extern("FT_Load_Glyph");
+
+fn CInt loadChar(Face face, ULong char_code, Int32 load_flags) @extern("FT_Load_Char");
+
+fn CInt setPixelSizes(Face face, UInt pixel_width, UInt pixel_height) @extern("FT_Set_Pixel_Sizes");

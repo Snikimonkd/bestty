@@ -1,6 +1,8 @@
+# FreeType bindings
+
 It is tested only on arm macos.
 
-To make it work on other systems you need to add your platform to `manifest.json`.
+To make it work on other systems you need to add your platform to `manifest.json`, something like this:
 
 ```json
 "macos-aarch64": {
@@ -18,7 +20,7 @@ To make it work on other systems you need to add your platform to `manifest.json
 }
 ```
 
-`link-args` and `linked-libraries` can be found with this commands:
+`link-args` and `linked-libraries` can be found with this commands.
 
 ```bash
 $ freetype-config --libs
@@ -26,3 +28,5 @@ $ freetype-config --libs
 $ freetype-config --cflags
 -I/opt/homebrew/opt/freetype/include/freetype2
 ```
+
+Note that `-L/opt/homebrew/opt/freetype/lib` goes to `link-args` and not to `linked-libraries`.
