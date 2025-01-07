@@ -11,8 +11,8 @@ import chan;
 import terminal;
 
 fn int main(String[] args) {
-//    logger::open()!!;
-//    defer logger::close();
+    logger::open()!!;
+    defer logger::close();
 //
 //    pty::Pty! pty = pty::init();
 //    if (catch err = pty) {
