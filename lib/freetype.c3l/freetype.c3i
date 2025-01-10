@@ -148,32 +148,31 @@ enum Error : int (CInt code, String description) {
 // #define FT_LOAD_COLOR                        ( 1L << 20 )
 // #define FT_LOAD_COMPUTE_METRICS              ( 1L << 21 )
 // #define FT_LOAD_BITMAP_METRICS_ONLY          ( 1L << 22 )
-// 
+//
 //   /* */
-// 
+//
 //   /* used internally only by certain font drivers */
 // #define FT_LOAD_ADVANCE_ONLY                 ( 1L << 8 )
 // #define FT_LOAD_SBITS_ONLY                   ( 1L << 14 )
 
 def Long = long; // FT_Long
-def Face = void*; // FT_Face
 def ULong = ulong; // FT_ULong
 def UInt = uint; // FT_UInt
 def Int32 = int; // FT_Int32
-def Int = int; // FT_Int32
+def Int = int; // FT_Int
 def String = void*; // FT_String
 def Library = void*; // FT_Library
 def Short = short; // FT_Short
 
 struct Bitmap {
-    CUInt rows;
-    CUInt width;
-    CInt             pitch;
-    CUInt*  buffer;
-    CUShort  num_grays;
-    CUInt   pixel_mode;
-    CUChar   palette_mode;
-    void*           palette;
+    CUInt   rows;
+    CUInt   width;
+    void*    pitch;
+    void* buffer;
+    void* num_grays;
+    void*  pixel_mode;
+    void*  palette_mode;
+    void*   palette;
 }
 
 struct GlyphSlotRec {
@@ -191,7 +190,7 @@ struct GlyphSlotRec {
     void*   format;
 
     Bitmap         bitmap;
-    void*            bitmap_left;
+    CInt            bitmap_left;
     void*            bitmap_top;
 
     void*        outline;
@@ -209,6 +208,8 @@ struct GlyphSlotRec {
 
     void*  internal;
 }
+def GlyphSlot = GlyphSlotRec*;
+
 
 struct FaceRec {
     Long           num_faces;
@@ -246,7 +247,7 @@ struct FaceRec {
     Short          underline_position;
     Short          underline_thickness;
 
-    void*      glyph;
+    GlyphSlot      glyph;
     void*           size;
     void*        charmap;
 
@@ -265,6 +266,7 @@ struct FaceRec {
 
     /*@private end */
 }
+def Face = FaceRec*;
 
 fn CInt initFreeType(Library* library) @extern("FT_Init_FreeType");
 fn CInt doneFreeType(Library library) @extern("FT_Done_FreeType");
