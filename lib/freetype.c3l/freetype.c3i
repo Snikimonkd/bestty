@@ -191,7 +191,7 @@ struct GlyphSlotRec {
 
     Bitmap         bitmap;
     CInt            bitmap_left;
-    void*            bitmap_top;
+    CInt            bitmap_top;
 
     void*        outline;
 
@@ -212,21 +212,21 @@ def GlyphSlot = GlyphSlotRec*;
 
 
 struct FaceRec {
-    Long           num_faces;
-    Long           face_index;
+    void*           num_faces;
+    void*           face_index;
 
-    Long           face_flags;
-    Long           style_flags;
+    void*           face_flags;
+    void*           style_flags;
 
-    Long           num_glyphs;
+    void*           num_glyphs;
 
-    String*        family_name;
-    String*        style_name;
+    void*        family_name;
+    void*        style_name;
 
-    Int            num_fixed_sizes;
+    void*            num_fixed_sizes;
     void*   available_sizes;
 
-    Int            num_charmaps;
+    void*            num_charmaps;
     void*       charmaps;
 
     void*        generic;
@@ -241,11 +241,11 @@ struct FaceRec {
     void*          descender;
     void*          height;
 
-    Short          max_advance_width;
-    Short          max_advance_height;
+    void*          max_advance_width;
+    void*          max_advance_height;
 
-    Short          underline_position;
-    Short          underline_thickness;
+    void*          underline_position;
+    void*          underline_thickness;
 
     GlyphSlot      glyph;
     void*           size;
@@ -282,3 +282,16 @@ fn CInt loadGlyph(Face face, UInt glyph_index, Int32 load_flags) @extern("FT_Loa
 fn CInt loadChar(Face face, ULong char_code, Int32 load_flags) @extern("FT_Load_Char");
 
 fn CInt setPixelSizes(Face face, UInt pixel_width, UInt pixel_height) @extern("FT_Set_Pixel_Sizes");
+
+//    ft::UInt idx = ft::getCharIndex(face, 'h');
+//    if (idx == 0) {
+//        logger::printfn("can't get char index: %s", err);
+//        return -1;
+//    }
+//
+//    err = ft::loadGlyph(face, idx, 0);
+//    if (err != ft::Error.OK.code) {
+//        logger::printfn("can't load glyph: %s", err);
+//        return -1;
+//    }
+

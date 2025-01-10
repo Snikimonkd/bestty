@@ -74,25 +74,12 @@ fn int tmp() {
         return -1;
     }
 
-//    ft::UInt idx = ft::getCharIndex(face, 'h');
-//    if (idx == 0) {
-//        logger::printfn("can't get char index: %s", err);
-//        return -1;
-//    }
-//
-//    err = ft::loadGlyph(face, idx, 0);
-//    if (err != ft::Error.OK.code) {
-//        logger::printfn("can't load glyph: %s", err);
-//        return -1;
-//    }
-
     // set size to load glyphs as
     err = ft::setPixelSizes(face, 0, 48);
     if (err != ft::Error.OK.code) {
         logger::printfn("can't set pixel sizes: %x", err);
         return -1;
     }
-
 
     // Load character glyph
     if(ft::loadChar(face, 'X', 1<<2)) {
@@ -108,16 +95,6 @@ fn int tmp() {
     // disable byte-alignment restriction
     gl::pixelStorei(gl::GL_UNPACK_ALIGNMENT, 1);
 
-    logger::printfn("face is null %s", face == null);
-    logger::printfn("face %s", face);
-    logger::printfn("glyph is null %s", face.glyph == null);
-    logger::printfn("glyph %s", face.glyph);
-    logger::printfn("bitmap %s", face.glyph.bitmap);
-    CUInt kek = face.glyph.bitmap.width;
-    logger::printfn("after"); // segfault
-    logger::printfn("width %s", face.glyph.bitmap.width); // segfault
-    logger::printfn("rows %s", face.glyph.bitmap.rows);
-
     gl::texImage2D(
         gl::GL_TEXTURE_2D,
         0,
@@ -130,15 +107,74 @@ fn int tmp() {
         face.glyph.bitmap.buffer,
     );
 
-    logger::printfn("wtf");
-
     // set texture options
+    gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_S, gl::GL_CLAMP_TO_EDGE);
+    gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_T, gl::GL_CLAMP_TO_EDGE);
+    gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MIN_FILTER, gl::GL_LINEAR);
+    gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MAG_FILTER, gl::GL_LINEAR);
+
+    // save something
+    int[<2>] size = {face.glyph.bitmap.width, face.glyph.bitmap.rows};
+    int[<2>] bearing = {face.glyph.bitmap_left, face.glyph.bitmap_top};
+
+    //
+    gl::bindTexture(gl::GL_TEXTURE_2D, 0);
+
+    // configure VAO/VBO for texture quads
+    CUInt vao, vbo;
+    gl::genVertexArrays(1, &vao);
+    gl::genBuffers(1, &vbo);
+    gl::bindVertexArray(vao);
+    gl::bindBuffer(gl::GL_ARRAY_BUFFER, vbo);
+    gl::bufferData(gl::GL_ARRAY_BUFFER, float.sizeof * 6 * 4, null, gl::GL_DYNAMIC_DRAW);
+    gl::enableVertexAttribArray(0);
+    gl::vertexAttribPointer(0, 4, gl::GL_FLOAT, (bool)gl::GL_FALSE, 4 * float.sizeof, null);
+    gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
+    gl::bindVertexArray(0);
+
+    //
 
     while (!glfw::windowShouldClose(window)) {
+        gl::clearColor(0.2f, 0.3f, 0.3f, 1.0f);
         gl::clear(gl::GL_COLOR_BUFFER_BIT);
 
-        glfw::swapBuffers(window);
+        gl::useProgram(shader.id);
 
+        gl::uniform3f(gl::getUniformLocation(shader.id, "textColor"), 0.5f, 0.8f, 0.2f);
+        gl::activeTexture(gl::GL_TEXTURE0);
+        gl::bindVertexArray(vao);
+
+        // update content of VBO memory
+        float xpos = 25.0f + bearing.x;
+        float ypos = 25.0f - (float)(size.y - bearing.y);
+
+        float w = size.x;
+        float h = size.y;
+
+        float[4][6] vertices = {
+            { xpos,     ypos + h,   0.0f, 0.0f },
+            { xpos,     ypos,       0.0f, 1.0f },
+            { xpos + w, ypos,       1.0f, 1.0f },
+
+            { xpos,     ypos + h,   0.0f, 0.0f },
+            { xpos + w, ypos,       1.0f, 1.0f },
+            { xpos + w, ypos + h,   1.0f, 0.0f }
+        };
+        // render glyph texture over quad
+        gl::bindTexture(gl::GL_TEXTURE_2D, texture);
+        // update content of VBO memory
+        gl::bindBuffer(gl::GL_ARRAY_BUFFER, vbo);
+        gl::bufferSubData(gl::GL_ARRAY_BUFFER, 0, vertices.len, (void*)&vertices);
+
+        gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
+        // render quad
+        gl::drawArrays(gl::GL_TRIANGLES, 0, 6);
+
+        gl::bindVertexArray(0);
+        gl::bindTexture(gl::GL_TEXTURE_2D, 0);
+
+
+        glfw::swapBuffers(window);
         glfw::pollEvents();
     }
 
