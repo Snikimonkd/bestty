@@ -159,36 +159,35 @@ const LOAD_RENDER = ((long)1)<<2;
 // #define FT_LOAD_SVG_ONLY                     ( 1L << 23 )
 
 
-//typedef signed short  FT_Short;
+//typedef signed short FT_Short;
 def Short = CShort;
-// typedef signed int  FT_Int;
+// typedef signed int FT_Int;
 def Int = CInt;
-// typedef char  FT_String;
+// typedef char FT_String;
 def String = CChar;
-// typedef unsigned int  FT_UInt;
+// typedef unsigned int FT_UInt;
 def UInt = CUInt;
-// typedef unsigned short  FT_UShort;
+// typedef unsigned short FT_UShort;
 def UShort = CUShort;
-// typedef signed long  FT_Long;
+// typedef signed long FT_Long;
 def Long = CLong;
-// typedef unsigned long  FT_ULong;
+// typedef unsigned long FT_ULong;
 def ULong = CULong;
-// typedef signed int      FT_Int32;
+// typedef signed int FT_Int32;
 def Int32 = CInt;
-// typedef unsigned int    FT_UInt32;
+// typedef unsigned int FT_UInt32;
 def UInt32 = CUInt;
-// typedef signed long  FT_Fixed;
+// typedef signed long FT_Fixed;
 def Fixed = CLong;
-// typedef signed long  FT_F26Dot6;
+// typedef signed long FT_F26Dot6;
 def F26Dot6 = CLong;
-// typedef signed long  FT_Pos;
+// typedef signed long FT_Pos;
 def Pos = CLong;
 
-// typedef int  FT_Error;
+// typedef int FT_Error;
 def Error = CInt;
 
 def Library = void*; // FT_Library
-
 
 struct Matrix {
     Fixed xx, xy;
@@ -196,128 +195,173 @@ struct Matrix {
 }
 
 struct BBox {
+    // FT_Pos  xMin, yMin;
     Pos xMin, yMin;
+    // FT_Pos  xMax, yMax;
     Pos xMax, yMax;
 }
 
-struct CharMapRec {
-    Face      face;
-    void*     encoding;
-    UShort    platform_id;
-    UShort    encoding_id;
+// typedef void  (*FT_Generic_Finalizer)( void*  object );
+// def GenericFinalizer = fn void(void* object);
+
+struct Generic {
+    // void*                 data;
+    void* data;
+    // FT_Generic_Finalizer  finalizer;
+    void* finalizer;
 }
 
+struct CharMapRec {
+    // FT_Face face;
+    Face face;
+    // FT_Encoding encoding;
+    CInt encoding;
+    // FT_UShort platform_id;
+    UShort platform_id;
+    // FT_UShort encoding_id;
+    UShort encoding_id;
+}
+// typedef struct FT_CharMapRec_*  FT_CharMap;
 def CharMap = CharMapRec*;
 
-struct  BitmapSize {
-    Short  height;
-    Short  width;
-
-    Pos    size;
-
-    Pos    x_ppem;
-    Pos    y_ppem;
+struct BitmapSize {
+    // FT_Short height;
+    Short height;
+    // FT_Short width;
+    Short width;
+    // FT_Pos size;
+    Pos size;
+    // FT_Pos x_ppem;
+    Pos x_ppem;
+    // FT_Pos y_ppem;
+    Pos y_ppem;
 }
 
 struct Bitmap {
     UInt    rows;
     UInt    width;
     void*   pitch;
-    CUChar* buffer;
+    void* buffer;
     void*   num_grays;
-    CUChar  pixel_mode;
+    void*  pixel_mode;
     void*   palette_mode;
     void*   palette;
 }
 
 struct GlyphSlotRec {
-    Library        library;
-    Face           face;
-    GlyphSlot      next;
-    UInt           glyph_index; /* new in 2.10; was reserved previously */
-    void*        generic;
-
-    void*  metrics;
-    Fixed          linearHoriAdvance;
-    Fixed          linearVertAdvance;
-    void*         advance;
-
-    void*   format;
-
-    Bitmap         bitmap;
-    Int            bitmap_left;
-    Int            bitmap_top;
-
-    void*        outline;
-
-    void*           num_subglyphs;
-    void*       subglyphs;
-
-    void*             control_data;
-    void*              control_len;
-
-    void*            lsb_delta;
-    void*            rsb_delta;
-
-    void*             other;
-
-    void*  internal;
+    // FT_Library library;
+    void* library;
+    // FT_Face face;
+    void* face;
+    // FT_GlyphSlot next;
+    void* next;
+    // FT_UInt glyph_index;
+    void* glyph_index;
+    // FT_Generic generic;
+    void* generic;
+    // FT_Glyph_Metrics metrics;
+    void* metrics;
+    // FT_Fixed linearHoriAdvance;
+    void* linearHoriAdvance;
+    // FT_Fixed linearVertAdvance;
+    void* linearVertAdvance;
+    // FT_Vector advance;
+    void* advance;
+    // FT_Glyph_Format format;
+    void* format;
+    // FT_Bitmap bitmap;
+    Bitmap bitmap;
+    // FT_Int bitmap_left;
+    Int bitmap_left;
+    // FT_Int bitmap_top;
+    Int bitmap_top;
+    // FT_Outline outline;
+    void* outline;
+    // FT_UInt num_subglyphs;
+    void* num_subglyphs;
+    // FT_SubGlyph subglyphs;
+    void* subglyphs;
+    // void* control_data;
+    void* control_data;
+    // long control_len;
+    void* control_len;
+    // FT_Pos lsb_delta;
+    void* lsb_delta;
+    // FT_Pos rsb_delta;
+    void* rsb_delta;
+    // void* other;
+    void* other;
+    // FT_Slot_Internal internal;
+    void* internal;
 }
+// typedef struct FT_GlyphSlotRec_*  FT_GlyphSlot;
 def GlyphSlot = GlyphSlotRec*;
 
 struct FaceRec {
-    Long           num_faces;
-    Long           face_index;
-
-    Long           face_flags;
-    Long           style_flags;
-
-    Long           num_glyphs;
-
-    String*        family_name;
-    String*        style_name;
-
-    Int            num_fixed_sizes;
-    BitmapSize*   available_sizes;
-
-    Int            num_charmaps;
-    CharMap*       charmaps;
-
-    void*        generic;
-
-    /* The following member variables (down to `underline_thickness`) */
-    /* are only relevant to scalable outlines; cf. @FT_Bitmap_Size    */
-    /* for bitmap fonts.                                              */
-    BBox           bbox;
-
-    UShort         units_per_EM;
-    Short          ascender;
-    Short          descender;
-    Short          height;
-
-    Short          max_advance_width;
-    Short          max_advance_height;
-
-    Short          underline_position;
-    Short          underline_thickness;
-
-    GlyphSlot      glyph;
-    void*           size;
-    void*        charmap;
-
-    /* private fields, internal to FreeType */
-
-    void*         driver;
-    void*         memory;
-    void*         stream;
-
-    void*        sizes_list;
-
-    void*        autohint;   /* face-specific auto-hinter data */
-    void*             extensions; /* unused                         */
-
-    void*  internal;
+    // FT_Long num_faces;
+    Long num_faces;
+    // FT_Long face_index;
+    Long face_index;
+    // FT_Long face_flags;
+    Long face_flags;
+    // FT_Long style_flags;
+    Long style_flags;
+    // FT_Long num_glyphs;
+    Long num_glyphs;
+    // FT_String* family_name;
+    String* family_name;
+    // FT_String* style_name;
+    String* style_name;
+    // FT_Int num_fixed_sizes;
+    Int num_fixed_sizes;
+    // FT_Bitmap_Size* available_sizes;
+    BitmapSize* available_sizes;
+    // FT_Int num_charmaps;
+    Int num_charmaps;
+    // FT_CharMap* charmaps;
+    CharMap* charmaps;
+    // FT_Generic generic;
+    Generic generic;
+    // FT_BBox bbox;
+    BBox bbox;
+    // FT_UShort units_per_EM;
+    UShort units_per_EM;
+    // FT_Short ascender;
+    void* ascender;
+    // FT_Short descender;
+    void* descender;
+    // FT_Short height;
+    void* height;
+    // FT_Short max_advance_width;
+    void* max_advance_width;
+    // FT_Short max_advance_height;
+    void* max_advance_height;
+    // FT_Short underline_position;
+    void* underline_position;
+    // FT_Short underline_thickness;
+    void* underline_thickness;
+    // FT_GlyphSlot glyph;
+    GlyphSlot glyph;
+    // FT_Size size;
+    void* size;
+    //FT_CharMap charmap;
+    void* charmap;
+    // FT_Driver driver;
+    void* driver;
+    // FT_Memory memory;
+    void* memory;
+    // FT_Stream stream;
+    void* stream;
+    // FT_ListRec sizes_list;
+    void* sizes_list;
+    // FT_Generic autohint;
+    void* autohint;
+    // void* extensions;
+    void* extensions;
+    // FT_Face_Internal internal;
+    void* internal;
 }
+// typedef struct FT_FaceRec_*  FT_Face;
 def Face = FaceRec*;
 
 fn Error initFreeType(Library* library) @extern("FT_Init_FreeType");
@@ -328,9 +372,9 @@ fn Error doneFace(Face face) @extern("FT_Done_Face");
 
 fn UInt getCharIndex(Face face, ULong charcode) @extern("FT_Get_Char_Index");
 
-fn Error loadGlyph(Face face, UInt glyph_index, Int32 load_flags) @extern("FT_Load_Glyph");
+fn Error loadGlyph(Face face, UInt glyph_index, Long load_flags) @extern("FT_Load_Glyph");
 
-fn Error loadChar(Face face, ULong char_code, Int32 load_flags) @extern("FT_Load_Char");
+fn Error loadChar(Face face, ULong char_code, Long load_flags) @extern("FT_Load_Char");
 
 fn Error setPixelSizes(Face face, UInt pixel_width, UInt pixel_height) @extern("FT_Set_Pixel_Sizes");
 
