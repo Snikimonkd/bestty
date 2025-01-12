@@ -6,41 +6,41 @@ import logger;
 
 char[WIDTH][HEIGHT] image;
 
-// fn void draw_bitmap(ft::Bitmap* bitmap, int x, int y) {
-//     int  i, j, p, q;
-//     int  x_max = x + bitmap.width;
-//     int  y_max = y + bitmap.rows;
-//
-//     for FOO: (i = x, p = 0; i < x_max; i++, p++) {
-//         for (j = y, q = 0; j < y_max; j++, q++) {
-//             if (i >= WIDTH) {
-//                 continue FOO;
-//             }
-//             if (j >= HEIGHT) {
-//                 continue FOO;
-//             }
-//             logger::printfn("i: %s, j: %s", i, j);
-//             image[j][i] |= bitmap.buffer[q * bitmap.width + p];
-//         }
-//     }
-// }
-//
-// fn void show_image() {
-//     int  i, j;
-//
-//     for ( i = 0; i < HEIGHT; i++ ) {
-//         for ( j = 0; j < WIDTH; j++ ) {
-//             if (image[i][j] == 0) {
-//                 logger::printf(" ");
-//             } else if (image[i][j] < 128) {
-//                 logger::printf("+");
-//             } else {
-//                 logger::printf("*");
-//             }
-//         }
-//         logger::printf("\n");
-//     }
-// }
+fn void draw_bitmap(ft::Bitmap* bitmap, int x, int y) {
+    int  i, j, p, q;
+    int  x_max = x + bitmap.width;
+    int  y_max = y + bitmap.rows;
+
+    for FOO: (i = x, p = 0; i < x_max; i++, p++) {
+        for (j = y, q = 0; j < y_max; j++, q++) {
+            if (i >= WIDTH) {
+                continue FOO;
+            }
+            if (j >= HEIGHT) {
+                continue FOO;
+            }
+            logger::printfn("i: %s, j: %s", i, j);
+            image[j][i] |= bitmap.buffer[q * bitmap.width + p];
+        }
+    }
+}
+
+fn void show_image() {
+    int  i, j;
+
+    for ( i = 0; i < HEIGHT; i++ ) {
+        for ( j = 0; j < WIDTH; j++ ) {
+            if (image[i][j] == 0) {
+                logger::printf(" ");
+            } else if (image[i][j] < 128) {
+                logger::printf("+");
+            } else {
+                logger::printf("*");
+            }
+        }
+        logger::printf("\n");
+    }
+}
 
 
 fn int test_fonts() {
@@ -86,22 +86,35 @@ fn int test_fonts() {
     logger::printfn("BBox.xMin: %s", face.bbox.xMin);
     logger::printfn("BBox.xMax: %s", face.bbox.xMax);
     logger::printfn("units_per_EM: %s", face.units_per_EM);
-
-    logger::printfn("bitmap_left: %s", face.glyph.bitmap_left);
-    logger::printfn("bitmap_top: %s", face.glyph.bitmap_top);
+    logger::printfn("underline_thickness: %s", face.underline_thickness);
+    logger::printfn("glyph_index: %s", face.glyph.glyph_index);
+    logger::printfn("metrics.width: %s", face.glyph.metrics.width);
+    logger::printfn("metrics.width: %s", face.glyph.metrics.height);
+    logger::printfn("metrics.horiBearingX: %s", face.glyph.metrics.horiBearingX);
+    logger::printfn("bitmap.width: %s", face.glyph.format);
     logger::printfn("bitmap.width: %s", face.glyph.bitmap.width);
     logger::printfn("bitmap.rows: %s", face.glyph.bitmap.rows);
+    logger::printfn("pixel_mode: %s", face.glyph.bitmap.pixel_mode);
+    logger::printfn("palette_mode: %s", face.glyph.bitmap.palette_mode);
+    logger::printfn("bitmap_left: %s", face.glyph.bitmap_left);
+    logger::printfn("bitmap_top: %s", face.glyph.bitmap_top);
     logger::printfn("bitmap.pixel_mode: %s", face.glyph.bitmap.pixel_mode);
+    logger::printfn("num_subglyphs: %s", face.glyph.num_subglyphs);
 
-//    draw_bitmap(&face.glyph.bitmap, face.glyph.bitmap_left, target_height - face.glyph.bitmap_top);
-//
-//    logger::printfn("show image");
-//
-//    show_image();
-//
-//    logger::printfn("end");
-//
-//
+    logger::printfn("---------------");
+    logger::printfn("control_len: %s", face.glyph.control_len);
+    logger::printfn("---------------");
+
+
+    draw_bitmap(&face.glyph.bitmap, face.glyph.bitmap_left, target_height - face.glyph.bitmap_top);
+
+    logger::printfn("show image");
+
+    show_image();
+
+    logger::printfn("end");
+
+
 
     ft::doneFace(face);
     ft::doneFreeType(library);

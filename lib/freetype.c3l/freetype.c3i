@@ -238,57 +238,138 @@ struct BitmapSize {
 }
 
 struct Bitmap {
-    UInt    rows;
-    UInt    width;
-    void*   pitch;
-    void* buffer;
-    void*   num_grays;
-    void*  pixel_mode;
-    void*   palette_mode;
-    void*   palette;
+    // unsigned int rows;
+    CUInt rows;
+    // unsigned int width;
+    UInt width;
+    // int pitch;
+    CInt pitch;
+    // unsigned char* buffer;
+    CUChar* buffer;
+    // unsigned short num_grays;
+    CUShort num_grays;
+    // unsigned char pixel_mode;
+    CUChar pixel_mode;
+    // unsigned char palette_mode;
+    CUChar palette_mode;
+    // void* palette;
+    void* palette;
 }
+
+struct Vector {
+    // FT_Pos  x;
+    Pos  x;
+    // FT_Pos  y;
+    Pos  y;
+}
+
+struct GlyphMetrics {
+    // FT_Pos width;
+    Pos width;
+    // FT_Pos height;
+    Pos height;
+    // FT_Pos horiBearingX;
+    Pos horiBearingX;
+    // FT_Pos horiBearingY;
+    Pos horiBearingY;
+    // FT_Pos horiAdvance;
+    Pos horiAdvance;
+    // FT_Pos vertBearingX;
+    Pos vertBearingX;
+    // FT_Pos vertBearingY;
+    Pos vertBearingY;
+    // FT_Pos vertAdvance;
+    Pos vertAdvance;
+}
+
+struct Outline {
+    // unsigned short n_contours;
+    CUShort n_contours;
+    // unsigned short n_points;
+    CUShort n_points;
+    // FT_Vector* points;
+    Vector * points;
+    // unsigned char* tags;
+    CUChar* tags;
+    // unsigned short* contours;
+    CUShort* contours;
+    // int  flags;
+    CInt flags;
+}
+
+struct SizeMetrics {
+    // FT_UShort x_ppem;
+    UShort x_ppem;
+    // FT_UShort y_ppem;
+    UShort y_ppem;
+    // FT_Fixed x_scale;
+    Fixed x_scale;
+    // FT_Fixed y_scale;
+    Fixed y_scale;
+    // FT_Pos ascender;
+    Pos ascender;
+    // FT_Pos descender;
+    Pos descender;
+    // FT_Pos height;
+    Pos height;
+    // FT_Pos max_advance;
+    Pos max_advance;
+}
+
+struct SizeRec {
+    // FT_Face face;
+    Face face;
+    // FT_Generic generic;
+    Generic generic;
+    // FT_Size_Metrics metrics;
+    SizeMetrics metrics;
+    // FT_Size_Internal internal;
+    void* internal;
+}
+// typedef struct FT_SizeRec_*  FT_Size;
+def Size = SizeRec*;
 
 struct GlyphSlotRec {
     // FT_Library library;
-    void* library;
+    Library library;
     // FT_Face face;
-    void* face;
+    Face face;
     // FT_GlyphSlot next;
-    void* next;
+    GlyphSlot next;
     // FT_UInt glyph_index;
-    void* glyph_index;
+    UInt glyph_index;
     // FT_Generic generic;
-    void* generic;
+    Generic generic;
     // FT_Glyph_Metrics metrics;
-    void* metrics;
+    GlyphMetrics metrics;
     // FT_Fixed linearHoriAdvance;
-    void* linearHoriAdvance;
+    Fixed linearHoriAdvance;
     // FT_Fixed linearVertAdvance;
-    void* linearVertAdvance;
+    Fixed linearVertAdvance;
     // FT_Vector advance;
-    void* advance;
+    Vector advance;
     // FT_Glyph_Format format;
-    void* format;
+    CInt format;
     // FT_Bitmap bitmap;
     Bitmap bitmap;
     // FT_Int bitmap_left;
-    Int bitmap_left;
+    CInt bitmap_left;
     // FT_Int bitmap_top;
-    Int bitmap_top;
+    CInt bitmap_top;
     // FT_Outline outline;
-    void* outline;
+    Outline outline;
     // FT_UInt num_subglyphs;
-    void* num_subglyphs;
+    UInt num_subglyphs;
     // FT_SubGlyph subglyphs;
     void* subglyphs;
     // void* control_data;
     void* control_data;
     // long control_len;
-    void* control_len;
+    CLong control_len;
     // FT_Pos lsb_delta;
-    void* lsb_delta;
+    Pos lsb_delta;
     // FT_Pos rsb_delta;
-    void* rsb_delta;
+    Pos rsb_delta;
     // void* other;
     void* other;
     // FT_Slot_Internal internal;
@@ -313,7 +394,7 @@ struct FaceRec {
     // FT_String* style_name;
     String* style_name;
     // FT_Int num_fixed_sizes;
-    Int num_fixed_sizes;
+    CInt num_fixed_sizes;
     // FT_Bitmap_Size* available_sizes;
     BitmapSize* available_sizes;
     // FT_Int num_charmaps;
@@ -327,25 +408,25 @@ struct FaceRec {
     // FT_UShort units_per_EM;
     UShort units_per_EM;
     // FT_Short ascender;
-    void* ascender;
+    Short ascender;
     // FT_Short descender;
-    void* descender;
+    Short descender;
     // FT_Short height;
-    void* height;
+    Short height;
     // FT_Short max_advance_width;
-    void* max_advance_width;
+    Short max_advance_width;
     // FT_Short max_advance_height;
-    void* max_advance_height;
+    Short max_advance_height;
     // FT_Short underline_position;
-    void* underline_position;
+    Short underline_position;
     // FT_Short underline_thickness;
-    void* underline_thickness;
+    Short underline_thickness;
     // FT_GlyphSlot glyph;
     GlyphSlot glyph;
     // FT_Size size;
-    void* size;
+    Size size;
     //FT_CharMap charmap;
-    void* charmap;
+    CharMap charmap;
     // FT_Driver driver;
     void* driver;
     // FT_Memory memory;

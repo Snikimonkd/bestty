@@ -67,12 +67,24 @@ int main(int argc, char **argv) {
   fprintf(stderr, "BBox.xMin: %ld\n", face->bbox.xMin);
   fprintf(stderr, "BBox.xMax: %ld\n", face->bbox.xMax);
   fprintf(stderr, "units_per_EM: %d\n", face->units_per_EM);
-
-  fprintf(stderr, "bitmap_left: %d\n", face->glyph->bitmap_left);
-  fprintf(stderr, "bitmap_top: %d\n", face->glyph->bitmap_top);
+  fprintf(stderr, "underline_thickness: %d\n", face->underline_thickness);
+  fprintf(stderr, "glyph_index: %d\n", face->glyph->glyph_index);
+  fprintf(stderr, "metrics.width: %ld\n", face->glyph->metrics.width);
+  fprintf(stderr, "metrics.width: %ld\n", face->glyph->metrics.height);
+  fprintf(stderr, "metrics.horiBearingX: %ld\n",
+          face->glyph->metrics.horiBearingX);
+  fprintf(stderr, "metrics.width: %u\n", face->glyph->format);
   fprintf(stderr, "bitmap.width: %u\n", face->glyph->bitmap.width);
   fprintf(stderr, "bitmap.rows: %u\n", face->glyph->bitmap.rows);
+  fprintf(stderr, "pixel_mode: %d\n", face->glyph->bitmap.pixel_mode);
+  fprintf(stderr, "palette_mode: %d\n", face->glyph->bitmap.palette_mode);
+  fprintf(stderr, "bitmap_left: %d\n", face->glyph->bitmap_left);
+  fprintf(stderr, "bitmap_top: %d\n", face->glyph->bitmap_top);
   fprintf(stderr, "bitmap.pixel_mode: %d\n", face->glyph->bitmap.pixel_mode);
+
+  fprintf(stderr, "----------------\n");
+  fprintf(stderr, "control_len: %ld\n", face->glyph->control_len);
+  fprintf(stderr, "----------------\n");
 
   return 0;
 
