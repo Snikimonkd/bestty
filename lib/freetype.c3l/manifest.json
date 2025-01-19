@@ -2,16 +2,16 @@
   "provides": "freetype",
   "targets": {
     "macos-aarch64": {
-      // Extra flags to the linker for this target:
       "link-args": [
         "-I/opt/homebrew/opt/freetype/include/freetype2",
-        "-L/opt/homebrew/opt/freetype/lib"
+        "-I/opt/homebrew/opt/ftgl/include/FTGL",
+        "-L/opt/homebrew/opt/freetype/lib",
+        "-L/opt/homebrew/opt/ftgl/lib"
       ],
-      // C3 libraries this target depends on:
       "dependencies": [],
-      // The external libraries to link for this target:
       "linked-libraries": [
-        "freetype"
+        "freetype",
+        "ftgl"
       ]
     }
   }

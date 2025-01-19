@@ -12,7 +12,7 @@ fault ShaderError {
     COMPILATION_ERROR,
 }
 
-fn Shader! initShader(char* vertexCode, char* fragmentCode) {
+fn Shader! initShader(ZString vertexCode, ZString fragmentCode) {
     CUInt vertex, fragment;
     CInt ok;
     // vertex shader

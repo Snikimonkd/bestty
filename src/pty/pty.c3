@@ -69,8 +69,6 @@ struct Pty {
 }
 
 fn Pty! init() {
-    Allocator allocator = allocator::heap();
-
     Fd master;
     Winsize ws = Winsize{};
     // TODO: termios
