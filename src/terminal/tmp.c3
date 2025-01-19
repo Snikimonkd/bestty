@@ -141,7 +141,7 @@ fn ft::Error buildAtlas(Character[]* chars) {
     }
 
     // set font size
-    err = ft::setPixelSizes(face, 0, 48);
+    err = ft::setPixelSizes(face, 0, 80);
     if (err != ft::OK) {
         logger::printfn("can't set pixel sizes: %s", err);
         return err;
@@ -187,7 +187,7 @@ fn ft::Error buildAtlas(Character[]* chars) {
             0,
             gl::GL_RED,
             gl::GL_UNSIGNED_BYTE,
-            &(face.glyph.bitmap.buffer),
+            face.glyph.bitmap.buffer,
         );
 
         // set texture options
