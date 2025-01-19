@@ -19,6 +19,11 @@ struct Character {
 }
 
 fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            (*self)[i][i] = 1;
+        }
+    }
     (*self)[0][0] = 2 / (right - left);
     (*self)[1][1] = 2 / (top - bottom);
     (*self)[2][2] = -1;
