@@ -150,7 +150,8 @@ fn ft::Error buildAtlas(Character[]* chars) {
     {
         // Load character glyph
         err = ft::loadChar(face, c, ft::LOAD_RENDER);
-        if (err != ft::OK) {
+        if (err != ft::OK)
+        {
             logger::printfn("can't load char: %s", err);
             return err;
         }
@@ -181,7 +182,7 @@ fn ft::Error buildAtlas(Character[]* chars) {
             0,
             gl::GL_RED,
             gl::GL_UNSIGNED_BYTE,
-            face.glyph.bitmap.buffer,
+            &(face.glyph.bitmap.buffer),
         );
 
         // set texture options
@@ -240,7 +241,7 @@ fn void renderText(int id, Character[] chars, ZString text, int[<2>] pos)
         gl::bindTexture(gl::GL_TEXTURE_2D, ch.textureID);
         // update content of VBO memory
         gl::bindBuffer(gl::GL_ARRAY_BUFFER, vbo);
-        gl::bufferSubData(gl::GL_ARRAY_BUFFER, 0, vertices.len*float.sizeof, &vertices);
+        gl::bufferSubData(gl::GL_ARRAY_BUFFER, 0, 4*6*float.sizeof, &vertices);
 
         gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
         // render quad

@@ -249,7 +249,7 @@ struct Bitmap {
     // unsigned int rows;
     CUInt rows;
     // unsigned int width;
-    UInt width;
+    CUInt width;
     // int pitch;
     CInt pitch;
     // unsigned char* buffer;
