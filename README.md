@@ -13,6 +13,8 @@ My attempt to implement a terminal emulator in [c3](https://c3-lang.org).
 - - [ ] handle control sequences in the output
 - - [ ] handle control sequences from the keyboard
 - [ ] tabs/splits
-- - [ ] migrate to some other ui (probably glfw)
-
+- - [x] use opengl to render window
+- - [ ] use freetype for font rendering
+- - - [x] create freetype bindings (https://github.com/c3lang/vendor/pull/45)
+- - - [ ] render text with freetype
 

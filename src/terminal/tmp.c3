@@ -21,9 +21,9 @@ struct Character {
 fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
     (*self)[0][0] = 2 / (right - left);
     (*self)[1][1] = 2 / (top - bottom);
-    (*self)[2][2] = - 1;
-    (*self)[3][0] = - (right + left) / (right - left);
-    (*self)[3][1] = - (top + bottom) / (top - bottom);
+    (*self)[2][2] = -1;
+    (*self)[3][0] = -(right + left) / (right - left);
+    (*self)[3][1] = -(top + bottom) / (top - bottom);
 }
 
 ZString vertexC = $embed("text.vs");
