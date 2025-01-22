@@ -24,7 +24,7 @@ fn int main(String[] args) {
     //    terminal::Terminal terminal = terminal::init(pty, parser);
     //    terminal.run()!!;
 
-    return terminal::tmp();
+    return terminal::tmp()!!;
     //return terminal::test();
     // return terminal::tri();
 

@@ -2,7 +2,7 @@ module terminal;
 
 import glfw;
 import opengl;
-import freetype;
+import font;
 import logger;
 
 def Mat = float[4][4];
@@ -24,13 +24,6 @@ macro Color Color.fromFloatRGBA(float $r, float $g, float $b, float $a) @operato
 Color background = Color.fromHexRGBA(0x28, 0x28, 0x28, 0xff);
 Color foreground = Color.fromHexRGBA(0xfb, 0xf1, 0xc7, 0xff);
 
-struct Character {
-    CUInt      textureID;
-    float[<2>] size;
-    float[<2>] bearing;
-    UInt       advance;
-}
-
 fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -47,9 +40,14 @@ fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
 ZString vertexC = $embed("text.vs");
 ZString fragmentC = $embed("text.fs");
 
-fn int tmp() {
+fault Error {
+    GL_INIT,
+}
+
+fn int! tmp() {
     if (!glfw::init()) {
-        return -1;
+        logger::printfn("getError: %s", gl::getError());
+        return Error.GL_INIT?;
     }
     glfw::windowHint(glfw::CONTEXT_VERSION_MAJOR, 3);
     glfw::windowHint(glfw::CONTEXT_VERSION_MINOR, 3);
@@ -61,7 +59,7 @@ fn int tmp() {
 
     // glfw window creation
     glfw::Window* window;
-    window = glfw::createWindow(WIDTH, HEIGHT, "hello glfw", null, null);
+    window = glfw::createWindow(WIDTH, HEIGHT, "bestty", null, null);
     if (!window) {
         glfw::terminate();
         logger::printfn("can't create window");
@@ -81,11 +79,7 @@ fn int tmp() {
     gl::useProgram(programID);
     gl::uniformMatrix4fv(gl::getUniformLocation(programID, "projection"), 1, (bool)gl::GL_FALSE, &projection);
 
-    Allocator allocator = allocator::heap();
-    Character[] chars = allocator::new_array(allocator, Character, 128);
-    defer allocator::free(allocator, chars);
-
-    buildAtlas(&chars);
+    Character[] chars = font::buildCharsAtlas()!;
 
     // configure VAO/VBO for texture quads
     // -----------------------------------
@@ -113,7 +107,7 @@ fn int tmp() {
         gl::clearColor(background.r, background.g, background.b, background.a);
         gl::clear(gl::GL_COLOR_BUFFER_BIT);
 
-        renderText(programID, chars, "hello", {100, 100});
+        renderText(programID, chars, "bestty", {5, HEIGHT-25-(int)chars[0].size.y});
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -130,88 +124,6 @@ fn void processInput(glfw::Window *window) {
     {
         glfw::setWindowShouldClose(window, glfw::TRUE);
     }
-}
-
-fn ft::Error buildAtlas(Character[]* chars) {
-    // FreeType
-    // --------
-    ft::Library library;
-    ft::Face face;
-    CInt err;
-
-    // init freetype lib
-    err = ft::initFreeType(&library);
-    if (err != 0) {
-        logger::printfn("init free type err: %s", err);
-        return err;
-    }
-
-    // load font as face
-    err = ft::newFace(library, "/Library/Fonts/Arial Unicode.ttf", 0, &face);
-    if (err != ft::OK) {
-        logger::printfn("can't load font: %s", err);
-        return err;
-    }
-
-    // set font size
-    err = ft::setPixelSizes(face, 0, 80);
-    if (err != ft::OK) {
-        logger::printfn("can't set pixel sizes: %s", err);
-        return err;
-    }
-
-    // disable byte-alignment restriction
-    gl::pixelStorei(gl::GL_UNPACK_ALIGNMENT, 1);
-
-    // load first 128 characters of ASCII set
-    for (char c = 32; c < 128; c++)
-    {
-        // Load character glyph
-        err = ft::loadChar(face, c, ft::LOAD_RENDER);
-        if (err != ft::OK)
-        {
-            logger::printfn("can't load char: %s", err);
-            return err;
-        }
-
-        // generate texture
-        CUInt texture;
-        gl::genTextures(1, &texture);
-        gl::bindTexture(gl::GL_TEXTURE_2D, texture);
-        gl::texImage2D(
-            gl::GL_TEXTURE_2D,
-            0,
-            gl::GL_RED,
-            face.glyph.bitmap.width,
-            face.glyph.bitmap.rows,
-            0,
-            gl::GL_RED,
-            gl::GL_UNSIGNED_BYTE,
-            face.glyph.bitmap.buffer,
-        );
-
-        // set texture options
-        gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_S, gl::GL_CLAMP_TO_EDGE);
-        gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_T, gl::GL_CLAMP_TO_EDGE);
-        gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MIN_FILTER, gl::GL_LINEAR);
-        gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MAG_FILTER, gl::GL_LINEAR);
-
-        // now store character for later use
-        Character character = {
-            .textureID = texture,
-            .size = { face.glyph.bitmap.width, face.glyph.bitmap.rows},
-            .bearing = { face.glyph.bitmap_left, face.glyph.bitmap_top},
-            .advance = (uint)face.glyph.advance.x,
-        };
-        (*chars)[c] = character;
-    }
-    gl::bindTexture(gl::GL_TEXTURE_2D, 0);
-
-    // destroy FreeType once we're finished
-    ft::doneFace(face);
-    ft::doneFreeType(library);
-
-    return 0;
 }
 
 fn void renderText(CUInt id, Character[] chars, ZString text, int[<2>] pos)

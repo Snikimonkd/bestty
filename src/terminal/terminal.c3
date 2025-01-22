@@ -10,8 +10,8 @@ import std::ascii;
 
 const BUF_SIZE = 32;
 
-const WIDTH = 640;
-const HEIGHT = 480;
+const WIDTH = 800;
+const HEIGHT = 600;
 
 struct Terminal {
     int w;
