@@ -4,12 +4,25 @@ import glfw;
 import opengl;
 import freetype;
 import logger;
-import std::thread;
-import std::time;
 
 def Mat = float[4][4];
 
 CUInt vao, vbo;
+
+distinct Color = float[<4>];
+
+macro Color Color.fromHexRGBA(int $r, int $g, int $b, int $a) @operator(construct)
+{
+    return Color.fromFloatRGBA((float)$r, (float)$g, (float)$b, (float)$a);
+}
+
+macro Color Color.fromFloatRGBA(float $r, float $g, float $b, float $a) @operator(construct)
+{
+    return Color{ $r/255.0f, $g/255.0f, $b/255.0f, $a/255.0f };
+}
+
+Color background = Color.fromHexRGBA(0x28, 0x28, 0x28, 0xff);
+Color foreground = Color.fromHexRGBA(0xfb, 0xf1, 0xc7, 0xff);
 
 struct Character {
     CUInt      textureID;
@@ -62,11 +75,11 @@ fn int tmp() {
     gl::blendFunc(gl::GL_SRC_ALPHA, gl::GL_ONE_MINUS_SRC_ALPHA);
 
     // compile and setup the shader
-    Shader shader = initShader(vertexC, fragmentC)!!;
+    CUInt programID = initShader(vertexC, fragmentC)!!;
     Mat projection;
     projection.ortho(0.0f, (float)WIDTH, 0.0f, (float)HEIGHT);
-    gl::useProgram(shader.id);
-    gl::uniformMatrix4fv(gl::getUniformLocation(shader.id, "projection"), 1, (bool)gl::GL_FALSE, &projection);
+    gl::useProgram(programID);
+    gl::uniformMatrix4fv(gl::getUniformLocation(programID, "projection"), 1, (bool)gl::GL_FALSE, &projection);
 
     Allocator allocator = allocator::heap();
     Character[] chars = allocator::new_array(allocator, Character, 128);
@@ -97,10 +110,10 @@ fn int tmp() {
 
         // render
         // ------
-        gl::clearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        gl::clearColor(background.r, background.g, background.b, background.a);
         gl::clear(gl::GL_COLOR_BUFFER_BIT);
 
-        renderText(shader.id, chars, "hello", {100, 100});
+        renderText(programID, chars, "hello", {100, 100});
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -161,19 +174,6 @@ fn ft::Error buildAtlas(Character[]* chars) {
             return err;
         }
 
-///        logger::printfn("%s", face.glyph.bitmap.width);
-///        logger::printfn("%s", face.glyph.bitmap.rows);
-///        for (int i = 0; i < face.glyph.bitmap.rows; i++) {
-///            for (int j = 0; j < face.glyph.bitmap.width; j++) {
-///                if (face.glyph.bitmap.buffer[i*face.glyph.bitmap.width + j] != 0) {
-///                    logger::printf("*");
-///                } else {
-///                    logger::printf(" ");
-///                }
-///            }
-///            logger::printf("\n");
-///        }
-
         // generate texture
         CUInt texture;
         gl::genTextures(1, &texture);
@@ -214,11 +214,11 @@ fn ft::Error buildAtlas(Character[]* chars) {
     return 0;
 }
 
-fn void renderText(int id, Character[] chars, ZString text, int[<2>] pos)
+fn void renderText(CUInt id, Character[] chars, ZString text, int[<2>] pos)
 {
     // activate corresponding render state
     gl::useProgram(id);
-    gl::uniform3f(gl::getUniformLocation(id, "textColor"), 0.5f, 0.8f, 0.2f);
+    gl::uniform3f(gl::getUniformLocation(id, "textColor"), foreground.r, foreground.g, foreground.b);
     gl::activeTexture(gl::GL_TEXTURE0);
     gl::bindVertexArray(vao);
 

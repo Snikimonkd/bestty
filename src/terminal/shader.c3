@@ -12,7 +12,7 @@ fault ShaderError {
     COMPILATION_ERROR,
 }
 
-fn Shader! initShader(ZString vertexCode, ZString fragmentCode) {
+fn CUInt! initShader(ZString vertexCode, ZString fragmentCode) {
     CUInt vertex, fragment;
     CInt ok;
     // vertex shader
@@ -59,5 +59,5 @@ fn Shader! initShader(ZString vertexCode, ZString fragmentCode) {
     gl::deleteShader(vertex);
     gl::deleteShader(fragment);
 
-    return Shader { .id = id };
+    return id;
 }
