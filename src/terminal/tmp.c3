@@ -93,8 +93,6 @@ fn int! tmp() {
     gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
     gl::bindVertexArray(0);
 
-    logger::printfn("getError: %s", gl::getError());
-
     // render loop
     // -----------
     while (!glfw::windowShouldClose(window)) {
@@ -107,7 +105,7 @@ fn int! tmp() {
         gl::clearColor(background.r, background.g, background.b, background.a);
         gl::clear(gl::GL_COLOR_BUFFER_BIT);
 
-        renderText(programID, chars, "bestty", {5, HEIGHT-25-(int)chars[0].size.y});
+        renderText(programID, chars, "[bestty]", {5, HEIGHT-(int)chars['['].size.y});
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------

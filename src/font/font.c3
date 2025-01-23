@@ -37,7 +37,8 @@ fn Character[]! buildCharsAtlas() {
     }
 
     // set font size
-    err = ft::setCharSize(face, 0, 24 * 64, 72, 0);
+    // err = ft::setCharSize(face, 0, 24 * 64, 72, 0);
+    err = ft::setPixelSizes(face, 24, 0);
     if (err != 0) {
         logger::printfn("can't set pixel sizes: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
@@ -74,12 +75,13 @@ fn Character[]! buildCharsAtlas() {
         );
 
         // set texture options
-        gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_S, gl::GL_CLAMP_TO_EDGE);
-        gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_T, gl::GL_CLAMP_TO_EDGE);
+        gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_S, gl::GL_CLAMP_TO_BORDER);
+        gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_WRAP_T, gl::GL_CLAMP_TO_BORDER);
         gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MIN_FILTER, gl::GL_LINEAR);
         gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MAG_FILTER, gl::GL_LINEAR);
 
         // now store character for later use
+        logger::printfn("rows: %s", face.glyph.bitmap.rows);
         Character character = {
             .textureID = texture,
             .size = { face.glyph.bitmap.width, face.glyph.bitmap.rows},
