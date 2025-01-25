@@ -37,8 +37,8 @@ fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
     (*self)[3][1] = -(top + bottom) / (top - bottom);
 }
 
-ZString vertexC = $embed("text.vs");
-ZString fragmentC = $embed("text.fs");
+ZString vertexC = $embed("vert.glsl");
+ZString fragmentC = $embed("frag.glsl");
 
 fault Error {
     GL_INIT,
@@ -105,7 +105,7 @@ fn int! tmp() {
         gl::clearColor(background.r, background.g, background.b, background.a);
         gl::clear(gl::GL_COLOR_BUFFER_BIT);
 
-        renderText(programID, chars, "[bestty]", {5, HEIGHT-(int)chars['['].size.y});
+        renderText(programID, chars, "#oO0-,[)", {5, HEIGHT-(int)chars['['].size.y});
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ fn void renderText(CUInt id, Character[] chars, ZString text, int[<2>] pos)
 {
     // activate corresponding render state
     gl::useProgram(id);
-    gl::uniform3f(gl::getUniformLocation(id, "textColor"), foreground.r, foreground.g, foreground.b);
+    gl::uniform3f(gl::getUniformLocation(id, "out_color"), foreground.r, foreground.g, foreground.b);
     gl::activeTexture(gl::GL_TEXTURE0);
     gl::bindVertexArray(vao);
 
@@ -138,8 +138,8 @@ fn void renderText(CUInt id, Character[] chars, ZString text, int[<2>] pos)
         char c = text[i];
         Character ch = chars[c];
 
-        float xpos = pos.x + ch.bearing.x;
-        float ypos = pos.y - (ch.size.y - ch.bearing.y);
+        float xpos = (float)pos.x + ch.bearing.x;
+        float ypos = (float)pos.y - (float)(ch.size.y - ch.bearing.y);
 
         float w = ch.size.x;
         float h = ch.size.y;

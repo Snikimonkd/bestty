@@ -37,8 +37,7 @@ fn Character[]! buildCharsAtlas() {
     }
 
     // set font size
-    // err = ft::setCharSize(face, 0, 24 * 64, 72, 0);
-    err = ft::setPixelSizes(face, 24, 0);
+    err = ft::setPixelSizes(face, 0, 24);
     if (err != 0) {
         logger::printfn("can't set pixel sizes: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
@@ -52,6 +51,13 @@ fn Character[]! buildCharsAtlas() {
     {
         // Load character glyph
         err = ft::loadChar(face, c, ft::LOAD_RENDER);
+        if (err != 0)
+        {
+            logger::printfn("can't load char: %s", err);
+            return ft::CINT_TO_ERROR[err]?;
+        }
+
+        err = ft::renderGlryph(face.glyph, ft::RENDER_MODE_SDF);
         if (err != 0)
         {
             logger::printfn("can't load char: %s", err);
@@ -81,7 +87,6 @@ fn Character[]! buildCharsAtlas() {
         gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MAG_FILTER, gl::GL_LINEAR);
 
         // now store character for later use
-        logger::printfn("rows: %s", face.glyph.bitmap.rows);
         Character character = {
             .textureID = texture,
             .size = { face.glyph.bitmap.width, face.glyph.bitmap.rows},

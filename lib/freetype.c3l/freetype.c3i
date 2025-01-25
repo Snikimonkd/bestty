@@ -265,6 +265,16 @@ const LOAD_BITMAP_METRICS_ONLY =                ( 1L << 22 );
 // #define FT_LOAD_NO_SVG                       ( 1L << 24 )
 const LOAD_NO_SVG =                             ( 1L << 24 );
 
+def RenderMode = CInt;
+const RenderMode RENDER_MODE_NORMAL = 0;
+const RenderMode RENDER_MODE_LIGHT = 1;
+const RenderMode RENDER_MODE_MONO = 2;
+const RenderMode RENDER_MODE_LCD = 3;
+const RenderMode RENDER_MODE_LCD_V = 4;
+const RenderMode RENDER_MODE_SDF = 5;
+const RenderMode RENDER_MODE_MAX = 6;
+
+
 //typedef signed short FT_Short;
 def Short = CShort;
 // typedef signed int FT_Int;
@@ -564,3 +574,7 @@ fn CInt loadChar(Face face, ULong char_code, Long load_flags) @extern("FT_Load_C
 fn CInt setPixelSizes(Face face, UInt pixel_width, UInt pixel_height) @extern("FT_Set_Pixel_Sizes");
 
 fn CInt setCharSize(Face face, F26Dot6 char_width, F26Dot6 char_height, CUInt horz_resolution, UInt vert_resolution ) @extern("FT_Set_Char_Size");
+
+fn CInt renderGlryph(GlyphSlot glyph, RenderMode render_mode) @extern("FT_Render_Glyph");
+
+fn CInt propertySet(Library library, CChar* module_name, CChar* property_name, void* value) @extern("FT_Property_Set");

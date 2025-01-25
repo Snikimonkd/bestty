@@ -25,7 +25,6 @@ fn int main(String[] args) {
     //    terminal.run()!!;
 
     return terminal::tmp()!!;
-    //return terminal::test();
     // return terminal::tri();
 
     //return 0;
