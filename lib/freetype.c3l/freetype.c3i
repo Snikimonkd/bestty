@@ -578,3 +578,28 @@ fn CInt setCharSize(Face face, F26Dot6 char_width, F26Dot6 char_height, CUInt ho
 fn CInt renderGlryph(GlyphSlot glyph, RenderMode render_mode) @extern("FT_Render_Glyph");
 
 fn CInt propertySet(Library library, CChar* module_name, CChar* property_name, void* value) @extern("FT_Property_Set");
+
+// typedef enum  FT_Encoding
+def Encoding = CULong;
+
+// FT_ENC_TAG
+macro Encoding encTag($a, $b, $c, $d) {
+    return (Encoding)(($a << 24) | ($b << 16) | ($c << 8) | $d);
+}
+
+const Encoding ENCODING_NONE = (Encoding)encTag(0, 0, 0, 0);
+const Encoding ENCODING_MS_SYMBOL = encTag('s', 'y', 'm', 'b');
+const Encoding ENCODING_UNICODE = encTag('u', 'n', 'i', 'c');
+const Encoding ENCODING_SJIS = encTag('s', 'j', 'i', 's');
+const Encoding ENCODING_PRC = encTag('g', 'b', ' ', ' ');
+const Encoding ENCODING_BIG5 = encTag('b', 'i', 'g', '5');
+const Encoding ENCODING_WANSUNG = encTag('w', 'a', 'n', 's');
+const Encoding ENCODING_JOHAB = encTag('j', 'o', 'h', 'a');
+const Encoding ENCODING_ADOBE_STANDARD = encTag('A', 'D', 'O', 'B');
+const Encoding ENCODING_ADOBE_EXPERT = encTag('A', 'D', 'B', 'E');
+const Encoding ENCODING_ADOBE_CUSTOM = encTag('A', 'D', 'B', 'C');
+const Encoding ENCODING_ADOBE_LATIN_1 = encTag('l', 'a', 't', '1');
+const Encoding ENCODING_OLD_LATIN_2 = encTag('l', 'a', 't', '2');
+const Encoding ENCODING_APPLE_ROMAN = encTag('a', 'r', 'm', 'n');
+
+fn CInt selectCharmap(Face face, Encoding encoding) @extern("FT_Select_Charmap");

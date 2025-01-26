@@ -24,8 +24,9 @@ fn int main(String[] args) {
     //    terminal::Terminal terminal = terminal::init(pty, parser);
     //    terminal.run()!!;
 
-    terminal::tmp()!!;
-    // return terminal::tri();
+    mem::@report_heap_allocs_in_scope() {
+        terminal::tmp()!!;
+    };
 
     return 0;
 }

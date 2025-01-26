@@ -3,7 +3,6 @@ module font;
 import glfw;
 import opengl;
 import logger;
-import terminal;
 
 ZString vertexCode = $embed("vert.glsl");
 ZString fragmentCode = $embed("frag.glsl");
@@ -33,7 +32,7 @@ fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
     (*self)[3][1] = -(top + bottom) / (top - bottom);
 }
 
-fn CUInt! compileAndLinkShaders() {
+fn CUInt! compileAndLinkShaders(int width, int height) {
     CUInt vertex, fragment;
     CInt ok;
     // vertex shader
@@ -81,7 +80,7 @@ fn CUInt! compileAndLinkShaders() {
     gl::deleteShader(fragment);
 
     Mat projection;
-    projection.ortho(0.0f, (float)terminal::WIDTH, 0.0f, (float)terminal::HEIGHT);
+    projection.ortho(0.0f, (float)width, 0.0f, (float)height);
     gl::useProgram(id);
     gl::uniformMatrix4fv(gl::getUniformLocation(id, "projection"), 1, (bool)gl::GL_FALSE, &projection);
 
