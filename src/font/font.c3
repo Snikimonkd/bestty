@@ -5,16 +5,32 @@ import opengl;
 
 import logger;
 
-struct Character {
+struct Glyph {
     CUInt      textureID;
     float[<2>] size;
     float[<2>] bearing;
     UInt       advance;
 }
 
-fn Character[]! buildCharsAtlas() {
-    Allocator allocator = allocator::heap();
-    Character[] chars = allocator::new_array(allocator, Character, 128);
+struct GlyphsAtlas {
+    CUInt programID;
+    Allocator allocator;
+
+    Glyph[] glyphs;
+}
+
+fn void! GlyphsAtlas.new_init(&self, usz size) => self.init(size, allocator::heap());
+
+fn void GlyphsAtlas.destroy(&self) {
+    allocator::free(self.allocator, self.glyphs);
+}
+
+fn void! GlyphsAtlas.init(&self, usz size, Allocator allocator) {
+    self.glyphs = allocator::new_array(allocator, Glyph, size);
+	defer catch allocator::free(allocator, self.glyphs);
+
+    self.allocator = allocator;
+    self.programID = compileAndLinkShaders()!;
 
     // FreeType
     // --------
@@ -28,6 +44,8 @@ fn Character[]! buildCharsAtlas() {
         logger::printfn("init free type err: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
     }
+    defer catch ft::doneFreeType(library);
+    defer ft::doneFreeType(library);
 
     // load font as face
     err = ft::newFace(library, "/Users/slukash/Library/Fonts/Iosevka-Medium.ttf", 0, &face);
@@ -35,6 +53,8 @@ fn Character[]! buildCharsAtlas() {
         logger::printfn("can't load font: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
     }
+    defer catch ft::doneFace(face);
+    defer ft::doneFace(face);
 
     // set font size
     err = ft::setPixelSizes(face, 0, 24);
@@ -68,6 +88,7 @@ fn Character[]! buildCharsAtlas() {
         CUInt texture;
         gl::genTextures(1, &texture);
         gl::bindTexture(gl::GL_TEXTURE_2D, texture);
+        // TODO: render one big texture with all characters but not many small independent ones
         gl::texImage2D(
             gl::GL_TEXTURE_2D,
             0,
@@ -87,19 +108,13 @@ fn Character[]! buildCharsAtlas() {
         gl::texParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MAG_FILTER, gl::GL_LINEAR);
 
         // now store character for later use
-        Character character = {
+        Glyph glyph = {
             .textureID = texture,
             .size = { face.glyph.bitmap.width, face.glyph.bitmap.rows},
             .bearing = { face.glyph.bitmap_left, face.glyph.bitmap_top},
             .advance = (uint)face.glyph.advance.x,
         };
-        (chars)[c] = character;
+        self.glyphs[c] = glyph;
     }
     gl::bindTexture(gl::GL_TEXTURE_2D, 0);
-
-    // destroy FreeType once we're finished
-    ft::doneFace(face);
-    ft::doneFreeType(library);
-
-    return chars;
 }

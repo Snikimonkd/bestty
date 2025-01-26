@@ -5,8 +5,6 @@ import opengl;
 import font;
 import logger;
 
-def Mat = float[4][4];
-
 CUInt vao, vbo;
 
 distinct Color = float[<4>];
@@ -24,30 +22,15 @@ macro Color Color.fromFloatRGBA(float $r, float $g, float $b, float $a) @operato
 Color background = Color.fromHexRGBA(0x28, 0x28, 0x28, 0xff);
 Color foreground = Color.fromHexRGBA(0xfb, 0xf1, 0xc7, 0xff);
 
-fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            (*self)[i][i] = 1;
-        }
-    }
-    (*self)[0][0] = 2 / (right - left);
-    (*self)[1][1] = 2 / (top - bottom);
-    (*self)[2][2] = -1;
-    (*self)[3][0] = -(right + left) / (right - left);
-    (*self)[3][1] = -(top + bottom) / (top - bottom);
+fault GLError {
+    GL_INIT_ERROR,
+    GL_CREATE_WINDOW_ERROR,
 }
 
-ZString vertexC = $embed("vert.glsl");
-ZString fragmentC = $embed("frag.glsl");
-
-fault Error {
-    GL_INIT,
-}
-
-fn int! tmp() {
+fn void! tmp() {
     if (!glfw::init()) {
         logger::printfn("getError: %s", gl::getError());
-        return Error.GL_INIT?;
+        return GLError.GL_INIT_ERROR?;
     }
     glfw::windowHint(glfw::CONTEXT_VERSION_MAJOR, 3);
     glfw::windowHint(glfw::CONTEXT_VERSION_MINOR, 3);
@@ -63,7 +46,7 @@ fn int! tmp() {
     if (!window) {
         glfw::terminate();
         logger::printfn("can't create window");
-        return -1;
+        return GLError.GL_CREATE_WINDOW_ERROR?;
     }
     glfw::makeContextCurrent(window);
 
@@ -73,13 +56,9 @@ fn int! tmp() {
     gl::blendFunc(gl::GL_SRC_ALPHA, gl::GL_ONE_MINUS_SRC_ALPHA);
 
     // compile and setup the shader
-    CUInt programID = initShader(vertexC, fragmentC)!!;
-    Mat projection;
-    projection.ortho(0.0f, (float)WIDTH, 0.0f, (float)HEIGHT);
-    gl::useProgram(programID);
-    gl::uniformMatrix4fv(gl::getUniformLocation(programID, "projection"), 1, (bool)gl::GL_FALSE, &projection);
-
-    Character[] chars = font::buildCharsAtlas()!;
+    font::GlyphsAtlas atlas;
+    atlas.new_init(128)!;
+    defer atlas.destroy();
 
     // configure VAO/VBO for texture quads
     // -----------------------------------
@@ -105,16 +84,17 @@ fn int! tmp() {
         gl::clearColor(background.r, background.g, background.b, background.a);
         gl::clear(gl::GL_COLOR_BUFFER_BIT);
 
-        renderText(programID, chars, "#oO0-,[)", {5, HEIGHT-(int)chars['['].size.y});
+        renderText(atlas, "[best]", {5, HEIGHT-(int)atlas.glyphs['['].size.y});
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfw::swapBuffers(window);
         glfw::pollEvents();
     }
-    logger::printfn("getError: %s", gl::getError());
 
-    return 0;
+    if (gl::getError() != 0) {
+        logger::printfn("window close errors: %s", gl::getError());
+    }
 }
 
 fn void processInput(glfw::Window *window) {
@@ -124,11 +104,11 @@ fn void processInput(glfw::Window *window) {
     }
 }
 
-fn void renderText(CUInt id, Character[] chars, ZString text, int[<2>] pos)
+fn void renderText(font::GlyphsAtlas atlas, ZString text, int[<2>] pos)
 {
     // activate corresponding render state
-    gl::useProgram(id);
-    gl::uniform3f(gl::getUniformLocation(id, "out_color"), foreground.r, foreground.g, foreground.b);
+    gl::useProgram(atlas.programID);
+    gl::uniform3f(gl::getUniformLocation(atlas.programID, "out_color"), foreground.r, foreground.g, foreground.b);
     gl::activeTexture(gl::GL_TEXTURE0);
     gl::bindVertexArray(vao);
 
@@ -136,7 +116,7 @@ fn void renderText(CUInt id, Character[] chars, ZString text, int[<2>] pos)
     for (int i = 0; i < text.char_len(); i++)
     {
         char c = text[i];
-        Character ch = chars[c];
+        font::Glyph ch = atlas.glyphs[c];
 
         float xpos = (float)pos.x + ch.bearing.x;
         float ypos = (float)pos.y - (float)(ch.size.y - ch.bearing.y);
