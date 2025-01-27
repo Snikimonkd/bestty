@@ -118,7 +118,7 @@ fn void Window.swapBuffers(&self) {
     glfw::swapBuffers(self.handle);
 }
 
-fn void Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas atlas)
+fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas atlas)
 {
     // activate corresponding render state
     gl::useProgram(atlas.programID);
@@ -130,13 +130,18 @@ fn void Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas 
     for (int i = 0; i < text.len; i++)
     {
         Char32 c = text[i];
-        font::Glyph ch = atlas.glyphs[c];
+        font::Glyph ch;
+        if (!atlas.glyphs.has_key(c)) {
+            ch = atlas.load_unicode(c)!;
+        } else {
+            ch = atlas.glyphs[c]!;
+        }
 
-        float xpos = (float)pos.x + ch.bearing.x;
-        float ypos = (float)pos.y - (float)(ch.size.y - ch.bearing.y);
+        float xpos = (float)pos.x + ch.bearing.x/atlas.scale;
+        float ypos = (float)pos.y - (float)(ch.size.y - ch.bearing.y)/atlas.scale;
 
-        float w = ch.size.x;
-        float h = ch.size.y;
+        float w = ch.size.x/atlas.scale;
+        float h = ch.size.y/atlas.scale;
         float[4][6] vertices = {
             { xpos,     ypos + h,   0.0f, 0.0f },
             { xpos,     ypos,       0.0f, 1.0f },
@@ -155,7 +160,7 @@ fn void Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas 
         gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
         // render quad
         gl::drawArrays(gl::GL_TRIANGLES, 0, 6);
-        pos.x += (ch.advance >> 6);
+        pos.x += (ch.advance >> 6)/atlas.scale;
         // logger::printfn("pos: %s", pos.x);
     }
     gl::bindVertexArray(0);

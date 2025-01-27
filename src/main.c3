@@ -29,7 +29,7 @@ fn int main(String[] args) {
         term.init()!!;
         defer term.destroy();
 
-        term.run();
+        term.run()!!;
     };
 
     return 0;
