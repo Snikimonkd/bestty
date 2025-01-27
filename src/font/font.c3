@@ -24,7 +24,7 @@ struct GlyphsAtlas {
     int maxHeight;
 }
 
-fn void! GlyphsAtlas.new_init(&self, usz size, int width, int height) => self.init(size, width, height, allocator::heap());
+fn void! GlyphsAtlas.new_init(&self, usz size, int width = 800, int height = 600) => self.init(size, width, height, allocator::heap());
 
 fn void GlyphsAtlas.destroy(&self) {
     allocator::free(self.allocator, self.glyphs);
@@ -82,6 +82,7 @@ fn void! GlyphsAtlas.init(&self, usz size, int width, int height, Allocator allo
     self.load_unicode('ĕ')!;
     self.load_unicode('¶')!;
     self.load_unicode('ʤ')!;
+    self.load_unicode('ȡ')!;
 }
 
 fn void! GlyphsAtlas.load_unicode(&self, ULong charcode) {
