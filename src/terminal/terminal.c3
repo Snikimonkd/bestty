@@ -20,7 +20,7 @@ fn void Term.destroy(&self) {
     self.window.destroy();
 }
 
-fn void Term.run(&self) {
+fn void! Term.run(&self) {
     // render loop
     while (!self.window.shouldClose()) {
         // poll events + process input
@@ -29,10 +29,10 @@ fn void Term.run(&self) {
         // render
         self.window.clear();
         self.window.renderText(
-                Char32[]{'[', 'b', 'e', 's', 't', '█', ']', '█', 'ĕ', '¶', 'ʤ', ']', 'ȡ'},
+                Char32[]{'[', 'b', 'e', '█', ']', '█', 'ĕ', '¶', 'ʤ', ']', 'ȡ'},
                 { 5, self.window.height - self.atlas.maxHeight },
                 self.atlas,
-                );
+                )!;
         // (CULong[]){'[', 'b', 'e', 's', 't', '█', ']', '█', 'ĕ', '¶', '¶'}
         // {[best█]█ĕ¶¶}ʤȡ
 

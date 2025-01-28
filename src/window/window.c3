@@ -118,7 +118,7 @@ fn void Window.swapBuffers(&self) {
     glfw::swapBuffers(self.handle);
 }
 
-fn void Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas atlas)
+fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas atlas)
 {
     // activate corresponding render state
     gl::useProgram(atlas.programID);
@@ -130,7 +130,12 @@ fn void Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas 
     for (int i = 0; i < text.len; i++)
     {
         Char32 c = text[i];
-        font::Glyph ch = atlas.glyphs[c];
+        font::Glyph ch;
+        if (!atlas.glyphs.has_key(c)) {
+            ch = atlas.load_unicode(c)!;
+        } else {
+            ch = atlas.glyphs[c]!;
+        }
 
         float xpos = (float)pos.x + ch.bearing.x;
         float ypos = (float)pos.y - (float)(ch.size.y - ch.bearing.y);

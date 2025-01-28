@@ -1,5 +1,7 @@
 module font;
 
+import std::collections::map;
+
 import freetype;
 import opengl;
 
@@ -19,23 +21,15 @@ struct GlyphsAtlas {
     CUInt programID;
     Allocator allocator;
 
-    Glyph[] glyphs;
+    map::HashMap(<Char32, Glyph>) glyphs;
 
     int maxHeight;
 }
 
-fn void! GlyphsAtlas.new_init(&self, usz size, int width = 800, int height = 600) => self.init(size, width, height, allocator::heap());
+fn void! GlyphsAtlas.new_init(&self, uint size = 256, int width = 800, int height = 600) => self.init(size, width, height, allocator::heap());
 
-fn void GlyphsAtlas.destroy(&self) {
-    allocator::free(self.allocator, self.glyphs);
-
-    ft::doneFace(self.face);
-    ft::doneFreeType(self.library);
-}
-
-fn void! GlyphsAtlas.init(&self, usz size, int width, int height, Allocator allocator) {
-    self.glyphs = allocator::new_array(allocator, Glyph, size);
-	defer catch allocator::free(allocator, self.glyphs);
+fn void! GlyphsAtlas.init(&self, uint size, int width, int height, Allocator allocator) {
+    self.glyphs.init(allocator, size);
 
     self.allocator = allocator;
     self.programID = compileAndLinkShaders(width, height)!;
@@ -59,17 +53,9 @@ fn void! GlyphsAtlas.init(&self, usz size, int width, int height, Allocator allo
     }
 
 
-    CULong value = 'u' << 24 | 'n' << 16 | 'i' << 8 | 'c';
-    err = ft::selectCharmap(self.face, value);
+    err = ft::selectCharmap(self.face, ft::ENCODING_UNICODE);
     if (err != 0) {
         logger::printfn("can't set unicode: %s", ft::CINT_TO_ERROR[err]);
-        return ft::CINT_TO_ERROR[err]?;
-    }
-
-    // set font size
-    err = ft::setPixelSizes(self.face, 0, 24);
-    if (err != 0) {
-        logger::printfn("can't set pixel sizes: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
     }
 
@@ -78,29 +64,41 @@ fn void! GlyphsAtlas.init(&self, usz size, int width, int height, Allocator allo
     {
         self.load_unicode(c)!;
     }
-    self.load_unicode('█')!;
-    self.load_unicode('ĕ')!;
-    self.load_unicode('¶')!;
-    self.load_unicode('ʤ')!;
-    self.load_unicode('ȡ')!;
+//    self.load_unicode('█')!;
+//    self.load_unicode('ĕ')!;
+//    self.load_unicode('¶')!;
+//    self.load_unicode('ʤ')!;
+//    self.load_unicode('ȡ')!;
 }
 
-fn void! GlyphsAtlas.load_unicode(&self, ULong charcode) {
+fn void GlyphsAtlas.destroy(&self) {
+    self.glyphs.free();
+
+    ft::doneFace(self.face);
+    ft::doneFreeType(self.library);
+}
+
+fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
     // disable byte-alignment restriction
     gl::pixelStorei(gl::GL_UNPACK_ALIGNMENT, 1);
 
     CInt err;
 
-    err = ft::loadChar(self.face, charcode, ft::LOAD_RENDER);
-    if (err != 0)
-    {
+    // set bigger font size for rendering
+    err = ft::setPixelSizes(self.face, 0, 24);
+    if (err != 0) {
+        logger::printfn("can't set pixel sizes: %s", ft::CINT_TO_ERROR[err]);
+        return ft::CINT_TO_ERROR[err]?;
+    }
+
+    err = ft::loadChar(self.face, charcode, ft::LOAD_DEFAULT);
+    if (err != 0) {
         logger::printfn("can't load glyph: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
     }
 
     err = ft::renderGlryph(self.face.glyph, ft::RENDER_MODE_SDF);
-    if (err != 0)
-    {
+    if (err != 0) {
         logger::printfn("can't load char: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
     }
@@ -136,10 +134,11 @@ fn void! GlyphsAtlas.load_unicode(&self, ULong charcode) {
         .advance = (uint)self.face.glyph.advance.x,
     };
     self.glyphs[charcode] = glyph;
-    if (self.face.glyph.bitmap_top > self.maxHeight)  {
-        logger::printfn("%s", self.face.glyph.bitmap_top);
+    if (self.face.glyph.bitmap_top > self.maxHeight) {
         self.maxHeight = self.face.glyph.bitmap_top;
     }
 
     gl::bindTexture(gl::GL_TEXTURE_2D, 0);
+
+    return glyph;
 }

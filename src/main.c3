@@ -3,13 +3,14 @@ module bestty;
 import std::io;
 import std::thread;
 import std::time;
-import logger;
 
+import logger;
 import pty;
 import parser;
 import terminal;
 
 fn int main(String[] args) {
+
     mem::@report_heap_allocs_in_scope() {
         logger::open()!!;
         defer logger::close();
@@ -29,7 +30,7 @@ fn int main(String[] args) {
         term.init()!!;
         defer term.destroy();
 
-        term.run();
+        term.run()!!;
     };
 
     return 0;
