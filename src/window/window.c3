@@ -160,7 +160,7 @@ fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas
         gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
         // render quad
         gl::drawArrays(gl::GL_TRIANGLES, 0, 6);
-        pos.x += (ch.advance >> 6);
+        pos.x += (ch.advance >> 6) + 5;
         // logger::printfn("pos: %s", pos.x);
     }
     gl::bindVertexArray(0);

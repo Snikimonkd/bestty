@@ -52,7 +52,6 @@ fn void! GlyphsAtlas.init(&self, uint size, int width, int height, Allocator all
         return ft::CINT_TO_ERROR[err]?;
     }
 
-
     err = ft::selectCharmap(self.face, ft::ENCODING_UNICODE);
     if (err != 0) {
         logger::printfn("can't set unicode: %s", ft::CINT_TO_ERROR[err]);
@@ -84,7 +83,20 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
 
     CInt err;
 
-    // set bigger font size for rendering
+    CInt spread = 2;
+    err = ft::propertySet(self.library, "sdf", "spread", &spread);
+    if (err != 0) {
+        logger::printfn("can't set property: %s", ft::CINT_TO_ERROR[err]);
+        return ft::CINT_TO_ERROR[err]?;
+    }
+
+    bool overlaps = true;
+    err = ft::propertySet(self.library, "sdf", "overlaps", &overlaps);
+    if (err != 0) {
+        logger::printfn("can't set property: %s", ft::CINT_TO_ERROR[err]);
+        return ft::CINT_TO_ERROR[err]?;
+    }
+
     err = ft::setPixelSizes(self.face, 0, 24);
     if (err != 0) {
         logger::printfn("can't set pixel sizes: %s", ft::CINT_TO_ERROR[err]);

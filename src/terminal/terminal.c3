@@ -4,6 +4,8 @@ import font;
 import window;
 import logger;
 
+import opengl;
+
 struct Term {
     font::GlyphsAtlas atlas;
     window::Window window;
@@ -12,7 +14,7 @@ struct Term {
 fn void! Term.init(&self, int width = 800, int height = 600) {
     self.window.init(width, height)!;
 
-    self.atlas.new_init(12000, self.window.width, self.window.height)!;
+    self.atlas.new_init(256, self.window.width, self.window.height)!;
 }
 
 fn void Term.destroy(&self) {
@@ -29,15 +31,23 @@ fn void! Term.run(&self) {
         // render
         self.window.clear();
         self.window.renderText(
-                Char32[]{'[', 'b', 'e', '█', ']', '█', 'ĕ', '¶', 'ʤ', ']', 'ȡ'},
+                Char32[]{'a','b','c','d','e','f','g','h','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'},
                 { 5, self.window.height - self.atlas.maxHeight },
-                self.atlas,
-                )!;
-        // (CULong[]){'[', 'b', 'e', 's', 't', '█', ']', '█', 'ĕ', '¶', '¶'}
-        // {[best█]█ĕ¶¶}ʤȡ
+                self.atlas,)!;
+
+        self.window.renderText(
+                Char32[]{'W', 'W', 'W', 'A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'},
+                { 5, self.window.height - self.atlas.maxHeight-150 },
+                self.atlas,)!;
+
+        self.window.renderText(
+                Char32[]{'#', '[', '█', ']', '█', 'ĕ', '¶', 'ʤ', ']', 'ȡ'},
+                { 5, self.window.height - self.atlas.maxHeight-300 },
+                self.atlas,)!;
 
         // swap buffers
         self.window.swapBuffers();
     }
 }
+
 

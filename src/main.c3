@@ -10,7 +10,6 @@ import parser;
 import terminal;
 
 fn int main(String[] args) {
-
     mem::@report_heap_allocs_in_scope() {
         logger::open()!!;
         defer logger::close();
