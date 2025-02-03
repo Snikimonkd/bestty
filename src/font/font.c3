@@ -23,7 +23,7 @@ struct GlyphsAtlas {
     CUInt programID;
     Allocator allocator;
 
-    map::HashMap(<Char32, Glyph>)* glyphs;
+    HashMap(<Char32, Glyph>)* glyphs;
 
     int maxHeight;
 }
@@ -31,7 +31,7 @@ struct GlyphsAtlas {
 fn void! GlyphsAtlas.new_init(&self, CUInt fontSize = 32, int width = 800, int height = 600) => self.init(fontSize, width, height, allocator::heap());
 
 fn void! GlyphsAtlas.init(&self, CUInt fontSize, int width, int height, Allocator allocator) {
-    self.glyphs = allocator::new(allocator, map::HashMap(<Char32, Glyph>));
+    self.glyphs = allocator::new(allocator, HashMap(<Char32, Glyph>));
     self.glyphs.new_init();
 
     self.allocator = allocator;

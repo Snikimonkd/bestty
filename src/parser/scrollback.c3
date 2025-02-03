@@ -68,6 +68,7 @@ fn List(<UTF8String>) Scrollback.render(&self, usz width, usz height, Allocator 
         }
         // TODO: line wrapping
         if (self.buf[i] == '\n') {
+            str.reverse();
             ret.push(str);
             UTF8String tmp;
             tmp.new_init(256, allocator);
@@ -77,6 +78,7 @@ fn List(<UTF8String>) Scrollback.render(&self, usz width, usz height, Allocator 
         }
     }
 
+    str.reverse();
     ret.push(str);
 
     ret.reverse();

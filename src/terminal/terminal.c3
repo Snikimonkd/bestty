@@ -5,10 +5,11 @@ import window;
 import logger;
 import pty;
 import parser;
-
+import glfw;
 import opengl;
-
 import std::collections::list;
+import std::collections::map;
+import std::time;
 
 struct Cursor {
     Char32 form;
@@ -24,6 +25,8 @@ struct Term {
     pty::Pty pty;
     parser::Parser parser;
     parser::Scrollback scrollback;
+
+    HashMap(<int, Time>)* keyLogs;
 }
 
 fn void! Term.init(&self, int width = 800, int height = 600, Allocator allocator = allocator::heap()) {
@@ -32,6 +35,8 @@ fn void! Term.init(&self, int width = 800, int height = 600, Allocator allocator
     self.pty.init()!;
     self.scrollback.init();
     self.parser.init();
+    self.keyLogs = allocator::new(allocator, HashMap(<int, time::Time>));
+    self.keyLogs.new_init();
 
     self.atlas.new_init(32, self.window.width, self.window.height)!;
     self.cursor = {
@@ -45,13 +50,16 @@ fn void Term.destroy(&self) {
     self.atlas.destroy();
     self.window.destroy();
     self.scrollback.destroy();
+
+    self.keyLogs.free();
+    allocator::free(self.allocator, self.keyLogs);
 }
 
 fn void! Term.run(&self) {
     // render loop
     while (!self.window.shouldClose()) {
         // poll events + process input
-        self.window.processInput();
+        self.processInput()!;
 
         // render
         self.window.clear();
@@ -73,8 +81,6 @@ fn void! Term.readFromPty(&self) {
     if (fromPty.len() == 0 ) {
         return;
     }
-
-    logger::printfn("1: %s", fromPty);
 
     // TODO: parser comes into play
     foreach (char c : fromPty) {
@@ -110,3 +116,39 @@ fn void! Term.drawCursor(&self) {
             { self.cursor.x, self.cursor.y },
             self.atlas)!;
 }
+
+fn void! Term.processInput(&self) {
+    glfw::pollEvents();
+    if (glfw::getKey(self.window.handle, glfw::KEY_ESCAPE) == glfw::PRESS) {
+        glfw::setWindowShouldClose(self.window.handle, glfw::TRUE);
+    }
+
+    int diff = 'a'-'A';
+
+    for (int i = 20; i < 128; i++) {
+        if (glfw::getKey(self.window.handle, i) == glfw::PRESS) {
+            if (!self.keyLogs.has_key(i)) {
+                (*self.keyLogs)[i] = time::now();
+            } else if (time::Time.diff_us(time::now(), (*self.keyLogs)[i]!) < time::MS*100) {
+                continue;
+            } else {
+                (*self.keyLogs)[i] = time::now();
+            }
+
+            self.pty.write((char)(i+diff))!;
+        }
+    }
+
+    // enter
+    if (glfw::getKey(self.window.handle, glfw::KEY_ENTER) == glfw::PRESS) {
+        if (!self.keyLogs.has_key('\n')) {
+            (*self.keyLogs)['\n'] = time::now();
+        } else if (time::Time.diff_us(time::now(), (*self.keyLogs)['\n']!) < time::MS*100) {
+            return;
+        } else {
+            (*self.keyLogs)['\n'] = time::now();
+        }
+        self.pty.write(10)!;
+    }
+}
+

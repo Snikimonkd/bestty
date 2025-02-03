@@ -139,7 +139,7 @@ fn List(<char>)! Pty.read(&self, Allocator allocator = allocator::heap()) {
     return ret;
 }
 
-fn void! Pty.write(&self, ZString cmd) {
+fn void! Pty.write(&self, char in) {
     Poll[] polls = {
         {
             .socket = (NativeSocket)self.master,
@@ -154,17 +154,23 @@ fn void! Pty.write(&self, ZString cmd) {
     }
 
 
-    isz written = 0;
-    isz len = cmd.char_len();
-    while (written < len) {
-        isz res = libc::write(self.master, (char*)cmd[written:len], len-written);
-        if (res == -1) {
-            logger::printfn("can't write to master fd: %s", libc::errno());
-            return PtyError.WRITE_ERROR?;
-        }
-        written += res;
+    isz res = libc::write(self.master, &&char[1]{in}, 1);
+    if (res != 1) {
+        logger::printfn("can't write to master fd: %s", libc::errno());
+        return PtyError.WRITE_ERROR?;
     }
-    logger::printfn("successfult written: %s", cmd);
+
+//    isz written = 0;
+//    isz len = cmd.char_len();
+//    while (written < len) {
+//        isz res = libc::write(self.master, (char*)cmd[written:len], len-written);
+//        if (res == -1) {
+//            logger::printfn("can't write to master fd: %s", libc::errno());
+//            return PtyError.WRITE_ERROR?;
+//        }
+//        written += res;
+//    }
+//    logger::printfn("successfult written: %s", cmd);
 
     return;
 }

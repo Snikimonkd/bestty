@@ -107,13 +107,6 @@ fn void Window.clear(&self) {
         gl::clear(gl::GL_COLOR_BUFFER_BIT);
 }
 
-fn void Window.processInput(&self) {
-    glfw::pollEvents();
-    if (glfw::getKey(self.handle, glfw::KEY_ESCAPE) == glfw::PRESS) {
-        glfw::setWindowShouldClose(self.handle, glfw::TRUE);
-    }
-}
-
 fn void Window.swapBuffers(&self) {
     glfw::swapBuffers(self.handle);
 }
@@ -135,6 +128,11 @@ fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas
             ch = atlas.load_unicode(c)!;
         } else {
             ch = (*atlas.glyphs)[c]!;
+        }
+
+        if (ch.size.x == 0 || ch.size.y == 0) {
+            // logger::printfn("no symbol: %s", text[i]);
+            continue;
         }
 
         float xpos = (float)pos.x + ch.bearing.x;
