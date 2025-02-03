@@ -26,6 +26,7 @@ struct GlyphsAtlas {
     map::HashMap(<Char32, Glyph>)* glyphs;
 
     int maxHeight;
+    int maxWidth;
 }
 
 fn void! GlyphsAtlas.new_init(&self, CUInt fontSize = 32, int width = 800, int height = 600) => self.init(fontSize, width, height, allocator::heap());
@@ -146,6 +147,10 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
     (*self.glyphs)[charcode] = glyph;
     if (self.face.glyph.bitmap_top > self.maxHeight) {
         self.maxHeight = self.face.glyph.bitmap_top;
+    }
+    if ((self.face.glyph.advance.x >> 6) > self.maxWidth) {
+        self.maxWidth = (int)self.face.glyph.advance.x >> 6;
+        logger::printfn("max width: %s", self.maxWidth);
     }
 
     gl::bindTexture(gl::GL_TEXTURE_2D, 0);
