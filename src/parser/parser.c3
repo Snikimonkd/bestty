@@ -18,6 +18,10 @@ struct Parser {
     int params_idx;
 }
 
+fn void Parser.init(&self) {
+    self.state = State.GROUND;
+}
+
 struct EscDispatch {
     char[] intermediates;
 }

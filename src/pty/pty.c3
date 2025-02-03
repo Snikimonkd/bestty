@@ -7,8 +7,9 @@ import std::net::os;
 import std::net;
 import std::time;
 import std::thread;
-import std::collections::list;
 import libc;
+
+import std::collections::list;
 
 const usz BUF_SIZE = 1024;
 
@@ -68,12 +69,11 @@ struct Pty {
     Fd master;
 }
 
-fn Pty! init() {
-    Fd master;
+fn void! Pty.init(&self) {
     Winsize ws = Winsize{};
     // TODO: termios
 
-    int pid = forkpty(&master, null, null, &ws);
+    int pid = forkpty(&self.master, null, null, &ws);
     if (pid == -1) {
         logger::printfn("can't fork pty");
         return PtyError.FORK_ERROR?;
@@ -97,24 +97,20 @@ fn Pty! init() {
         logger::printfn("[SLAVE] i can't be here");
     }
 
-    int flags = fcntl(master, F_GETFL, 0);
+    int flags = fcntl(self.master, F_GETFL, 0);
     if (flags == -1) {
         logger::printfn("can't get master fd flags: %s", libc::errno());
         return PtyError.GET_FLAGS_ERROR?;
     }
 
-    int a = fcntl(master, F_SETFL, flags | os::O_NONBLOCK);
+    int a = fcntl(self.master, F_SETFL, flags | os::O_NONBLOCK);
     if (a == -1) {
         logger::printfn("can't set master fd flags: %s", libc::errno());
         return PtyError.SET_FLAGS_ERROR?;
     }
-
-    return { .master = master };
 }
 
-fn DString! Pty.read(&self) {
-    DString res;
-
+fn List(<char>)! Pty.read(&self, Allocator allocator = allocator::heap()) {
     Poll[] polls = {
         {
             .socket = (NativeSocket)self.master,
@@ -125,7 +121,7 @@ fn DString! Pty.read(&self) {
     ulong n = net::poll(polls, 0)!!;
     if (n != 1 || polls[0].revents != net::POLL_EVENT_READ) {
 //        logger::printfn("read poll res n: %s, revents: %s", n, polls[0].revents);
-        return PtyError.EMPTY?;
+        return {};
     }
 
     char[BUF_SIZE] buf;
@@ -135,11 +131,12 @@ fn DString! Pty.read(&self) {
         return PtyError.READ_ERROR?;
     }
     if (s == 0) {
-        return PtyError.EMPTY?;
+        return {};
     }
 
-    res.append_chars((String)buf[0..s-1]);
-    return res;
+    List(<char>) ret;
+    ret.new_init_with_array(buf[0..s-1], allocator);
+    return ret;
 }
 
 fn void! Pty.write(&self, ZString cmd) {

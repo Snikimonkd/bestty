@@ -13,12 +13,7 @@ fn int main(String[] args) {
     mem::@report_heap_allocs_in_scope() {
         logger::open()!!;
         defer logger::close();
-        //
-        //    pty::Pty! pty = pty::init();
-        //    if (catch err = pty) {
-        //        io::printfn("can't init pty: %s", err);
-        //        return -1;
-        //    }
+
         //
         //    parser::Parser parser = { .state = parser::State.GROUND };
         //

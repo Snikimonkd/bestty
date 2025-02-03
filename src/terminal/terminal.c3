@@ -3,8 +3,12 @@ module terminal;
 import font;
 import window;
 import logger;
+import pty;
+import parser;
 
 import opengl;
+
+import std::collections::list;
 
 struct Cursor {
     Char32 form;
@@ -13,13 +17,21 @@ struct Cursor {
 }
 
 struct Term {
+    Allocator allocator;
     font::GlyphsAtlas atlas;
     window::Window window;
     Cursor cursor;
+    pty::Pty pty;
+    parser::Parser parser;
+    parser::Scrollback scrollback;
 }
 
-fn void! Term.init(&self, int width = 800, int height = 600) {
+fn void! Term.init(&self, int width = 800, int height = 600, Allocator allocator = allocator::heap()) {
+    self.allocator = allocator;
     self.window.init(width, height)!;
+    self.pty.init()!;
+    self.scrollback.init();
+    self.parser.init();
 
     self.atlas.new_init(32, self.window.width, self.window.height)!;
     self.cursor = {
@@ -32,6 +44,7 @@ fn void! Term.init(&self, int width = 800, int height = 600) {
 fn void Term.destroy(&self) {
     self.atlas.destroy();
     self.window.destroy();
+    self.scrollback.destroy();
 }
 
 fn void! Term.run(&self) {
@@ -42,24 +55,58 @@ fn void! Term.run(&self) {
 
         // render
         self.window.clear();
-        self.window.renderText(
-                Char32[]{'→', 'a','b','c','d','e','f','g','h','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'},
-                { 5, self.window.height - self.atlas.maxHeight },
-                self.atlas,)!;
 
-        self.window.renderText(
-                Char32[]{'→','W', 'W', 'W', 'A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'},
-                { 5, self.window.height - self.atlas.maxHeight-150 },
-                self.atlas,)!;
-
-        self.window.renderText(
-                Char32[]{'#', '[', '█', ']', '█', 'ĕ', '¶', 'ʤ', ']', 'ȡ'},
-                { 5, self.window.height - self.atlas.maxHeight-300 },
-                self.atlas,)!;
+        self.readFromPty()!;
+        self.drawScrollback()!;
 
         // swap buffers
         self.window.swapBuffers();
     }
 }
 
+fn void! Term.readFromPty(&self) {
+    List(<char>)! fromPty = self.pty.read(self.allocator);
+    if (catch err = fromPty) {
+        return;
+    }
+    defer fromPty.free();
+    if (fromPty.len() == 0 ) {
+        return;
+    }
 
+    logger::printfn("1: %s", fromPty);
+
+    // TODO: parser comes into play
+    foreach (char c : fromPty) {
+        parser::PtyAction! action = self.parser.next(c);
+        if (catch err = action) {
+            return err?;
+        }
+
+        self.scrollback.handle(action)!!;
+    }
+}
+
+fn void! Term.drawScrollback(&self) {
+    List(<UTF8String>) fromScrollback = self.scrollback.render(10000, self.window.height/self.atlas.maxHeight, self.allocator);
+    defer {
+        for (int i = 0; i < fromScrollback.len(); i++) {
+            fromScrollback[i].free();
+        }
+        fromScrollback.free();
+    }
+
+    for (int i = 0; i < fromScrollback.len(); i++) {
+        self.window.renderText(
+                fromScrollback[i].array_view(),
+                { 5, self.window.height - self.atlas.maxHeight*i - self.window.top - 2 },
+                self.atlas)!;
+    }
+}
+
+fn void! Term.drawCursor(&self) {
+    self.window.renderText(
+            {'█'},
+            { self.cursor.x, self.cursor.y },
+            self.atlas)!;
+}
