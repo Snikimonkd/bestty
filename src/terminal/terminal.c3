@@ -14,7 +14,7 @@ struct Term {
 fn void! Term.init(&self, int width = 800, int height = 600) {
     self.window.init(width, height)!;
 
-    self.atlas.new_init(256, self.window.width, self.window.height)!;
+    self.atlas.new_init(32, self.window.width, self.window.height)!;
 }
 
 fn void Term.destroy(&self) {

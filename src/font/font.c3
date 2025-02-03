@@ -18,21 +18,25 @@ struct GlyphsAtlas {
     ft::Library library;
     ft::Face face;
 
+    CUInt fontSize;
+
     CUInt programID;
     Allocator allocator;
 
-    map::HashMap(<Char32, Glyph>) glyphs;
+    map::HashMap(<Char32, Glyph>)* glyphs;
 
     int maxHeight;
 }
 
-fn void! GlyphsAtlas.new_init(&self, uint size = 256, int width = 800, int height = 600) => self.init(size, width, height, allocator::heap());
+fn void! GlyphsAtlas.new_init(&self, CUInt fontSize = 32, int width = 800, int height = 600) => self.init(fontSize, width, height, allocator::heap());
 
-fn void! GlyphsAtlas.init(&self, uint size, int width, int height, Allocator allocator) {
-    self.glyphs.init(allocator, size);
+fn void! GlyphsAtlas.init(&self, CUInt fontSize, int width, int height, Allocator allocator) {
+    self.glyphs = allocator::new(allocator, map::HashMap(<Char32, Glyph>));
+    self.glyphs.new_init();
 
     self.allocator = allocator;
     self.programID = compileAndLinkShaders(width, height)!;
+    self.fontSize = fontSize;
 
     // FreeType
     // --------
@@ -72,6 +76,7 @@ fn void! GlyphsAtlas.init(&self, uint size, int width, int height, Allocator all
 
 fn void GlyphsAtlas.destroy(&self) {
     self.glyphs.free();
+    allocator::free(self.allocator, self.glyphs);
 
     ft::doneFace(self.face);
     ft::doneFreeType(self.library);
@@ -83,13 +88,6 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
 
     CInt err;
 
-    CInt spread = 2;
-    err = ft::propertySet(self.library, "sdf", "spread", &spread);
-    if (err != 0) {
-        logger::printfn("can't set property: %s", ft::CINT_TO_ERROR[err]);
-        return ft::CINT_TO_ERROR[err]?;
-    }
-
     bool overlaps = true;
     err = ft::propertySet(self.library, "sdf", "overlaps", &overlaps);
     if (err != 0) {
@@ -97,7 +95,7 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
         return ft::CINT_TO_ERROR[err]?;
     }
 
-    err = ft::setPixelSizes(self.face, 0, 24);
+    err = ft::setPixelSizes(self.face, 0, self.fontSize);
     if (err != 0) {
         logger::printfn("can't set pixel sizes: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
@@ -145,7 +143,7 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
         .bearing = { self.face.glyph.bitmap_left, self.face.glyph.bitmap_top},
         .advance = (uint)self.face.glyph.advance.x,
     };
-    self.glyphs[charcode] = glyph;
+    (*self.glyphs)[charcode] = glyph;
     if (self.face.glyph.bitmap_top > self.maxHeight) {
         self.maxHeight = self.face.glyph.bitmap_top;
     }
