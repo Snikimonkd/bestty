@@ -26,16 +26,17 @@ fn void! Scrollback.handle(&self, PtyAction action) {
     switch (action.type) {
         case PRINT:
             // todo skip for now because raylib stops printing after \0 in string
-            if (action.payload.print == '\0') {
-                return;
-            }
+//            if (action.payload.print == '\0') {
+//                return;
+//            }
+            logger::printfn("print: %s, %c", (Char32)action.payload.print, (Char32)action.payload.print);
             self.buf.push((Char32)action.payload.print);
-            // self.buf.append_char(action.payload.print);
             return;
         case NONE:
             return;
         case EXECUTE:
             self.handle_execute(action.payload.execute)!!;
+            logger::printfn("print: %s", (Char32)action.payload.print);
             return;
         default:
             // TODO for now just ignore evrething
@@ -49,7 +50,10 @@ fn void! Scrollback.handle_execute(&self, char c) {
         case '\n':
             self.buf.push('\n');
         case '\t':
+            // todo: handle this
             self.buf.push('\t');
+        case '\b':
+            self.buf.pop()!;
         default:
             logger::printfn("unknown execute action: %d", c);
             return;
@@ -62,8 +66,9 @@ fn List(<UTF8String>) Scrollback.render(&self, usz width, usz height, Allocator 
     UTF8String str;
     str.new_init(256, allocator);
     for (long i = self.buf.len()-1; i >= 0; i--) {
-        if (ret.len() == width) {
+        if (ret.len() == height) {
             str.free();
+            ret.reverse();
             return ret;
         }
         // TODO: line wrapping

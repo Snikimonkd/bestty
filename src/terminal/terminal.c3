@@ -27,6 +27,9 @@ struct Term {
     parser::Scrollback scrollback;
 
     HashMap(<int, Time>)* keyLogs;
+
+    int leftPadding;
+    int topPadding;
 }
 
 fn void! Term.init(&self, int width = 800, int height = 600, Allocator allocator = allocator::heap()) {
@@ -44,6 +47,8 @@ fn void! Term.init(&self, int width = 800, int height = 600, Allocator allocator
         .x = 0,
         .y = 0,
     };
+    self.leftPadding = 5;
+    self.topPadding = 5;
 }
 
 fn void Term.destroy(&self) {
@@ -66,6 +71,7 @@ fn void! Term.run(&self) {
 
         self.readFromPty()!;
         self.drawScrollback()!;
+        self.drawCursor()!;
 
         // swap buffers
         self.window.swapBuffers();
@@ -105,14 +111,14 @@ fn void! Term.drawScrollback(&self) {
     for (int i = 0; i < fromScrollback.len(); i++) {
         self.window.renderText(
                 fromScrollback[i].array_view(),
-                { 5, self.window.height - self.atlas.maxHeight*i - self.window.top - 2 },
+                { self.leftPadding, self.window.height - self.atlas.maxHeight*i - self.window.top - self.topPadding },
                 self.atlas)!;
     }
 }
 
 fn void! Term.drawCursor(&self) {
     self.window.renderText(
-            {'█'},
+            { self.cursor.form },
             { self.cursor.x, self.cursor.y },
             self.atlas)!;
 }
@@ -125,7 +131,7 @@ fn void! Term.processInput(&self) {
 
     int diff = 'a'-'A';
 
-    for (int i = 20; i < 128; i++) {
+    for (int i = glfw::KEY_A; i <= glfw::KEY_Z; i++) {
         if (glfw::getKey(self.window.handle, i) == glfw::PRESS) {
             if (!self.keyLogs.has_key(i)) {
                 (*self.keyLogs)[i] = time::now();
@@ -141,14 +147,38 @@ fn void! Term.processInput(&self) {
 
     // enter
     if (glfw::getKey(self.window.handle, glfw::KEY_ENTER) == glfw::PRESS) {
-        if (!self.keyLogs.has_key('\n')) {
-            (*self.keyLogs)['\n'] = time::now();
-        } else if (time::Time.diff_us(time::now(), (*self.keyLogs)['\n']!) < time::MS*100) {
+        if (!self.keyLogs.has_key(glfw::KEY_ENTER)) {
+            (*self.keyLogs)[glfw::KEY_ENTER] = time::now();
+        } else if (time::Time.diff_us(time::now(), (*self.keyLogs)[glfw::KEY_ENTER]!) < time::MS*100) {
             return;
         } else {
-            (*self.keyLogs)['\n'] = time::now();
+            (*self.keyLogs)[glfw::KEY_ENTER] = time::now();
         }
-        self.pty.write(10)!;
+        self.pty.write('\n')!;
+    }
+
+    // backspace
+    if (glfw::getKey(self.window.handle, glfw::KEY_BACKSPACE) == glfw::PRESS) {
+        if (!self.keyLogs.has_key(glfw::KEY_BACKSPACE)) {
+            (*self.keyLogs)[glfw::KEY_BACKSPACE] = time::now();
+        } else if (time::Time.diff_us(time::now(), (*self.keyLogs)[glfw::KEY_BACKSPACE]!) < time::MS*100) {
+            return;
+        } else {
+            (*self.keyLogs)[glfw::KEY_BACKSPACE] = time::now();
+        }
+        self.pty.write('\b')!;
+    }
+
+    // backspace
+    if (glfw::getKey(self.window.handle, glfw::KEY_SPACE) == glfw::PRESS) {
+        if (!self.keyLogs.has_key(glfw::KEY_SPACE)) {
+            (*self.keyLogs)[glfw::KEY_SPACE] = time::now();
+        } else if (time::Time.diff_us(time::now(), (*self.keyLogs)[glfw::KEY_SPACE]!) < time::MS*100) {
+            return;
+        } else {
+            (*self.keyLogs)[glfw::KEY_SPACE] = time::now();
+        }
+        self.pty.write(' ')!;
     }
 }
 

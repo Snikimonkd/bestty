@@ -130,10 +130,10 @@ fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas
             ch = (*atlas.glyphs)[c]!;
         }
 
-        if (ch.size.x == 0 || ch.size.y == 0) {
-            // logger::printfn("no symbol: %s", text[i]);
-            continue;
-        }
+//        if (ch.size.x == 0 || ch.size.y == 0) {
+//            // logger::printfn("no symbol: %s", text[i]);
+//            continue;
+//        }
 
         float xpos = (float)pos.x + ch.bearing.x;
         float ypos = (float)pos.y - (float)(ch.size.y - ch.bearing.y);
@@ -158,8 +158,9 @@ fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas
         gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
         // render quad
         gl::drawArrays(gl::GL_TRIANGLES, 0, 6);
+
+        // move
         pos.x += (ch.advance >> 6);
-        // logger::printfn("pos: %s", pos.x);
     }
     gl::bindVertexArray(0);
     gl::bindTexture(gl::GL_TEXTURE_2D, 0);
