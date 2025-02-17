@@ -11,17 +11,10 @@ import std::collections::list;
 import std::collections::map;
 import std::time;
 
-struct Cursor {
-    Char32 form;
-    int x;
-    int y;
-}
-
 struct Term {
     Allocator allocator;
     font::GlyphsAtlas atlas;
     window::Window window;
-    Cursor cursor;
     pty::Pty pty;
     parser::Parser parser;
     parser::Scrollback scrollback;
@@ -42,11 +35,6 @@ fn void! Term.init(&self, int width = 800, int height = 600, Allocator allocator
     self.keyLogs.new_init();
 
     self.atlas.new_init(32, self.window.width, self.window.height)!;
-    self.cursor = {
-        .form = '█',
-        .x = 0,
-        .y = 0,
-    };
     self.leftPadding = 5;
     self.topPadding = 5;
 }
@@ -71,7 +59,6 @@ fn void! Term.run(&self) {
 
         self.readFromPty()!;
         self.drawScrollback()!;
-        self.drawCursor()!;
 
         // swap buffers
         self.window.swapBuffers();
@@ -114,13 +101,6 @@ fn void! Term.drawScrollback(&self) {
                 { self.leftPadding, self.window.height - self.atlas.maxHeight*i - self.window.top - self.topPadding },
                 self.atlas)!;
     }
-}
-
-fn void! Term.drawCursor(&self) {
-    self.window.renderText(
-            { self.cursor.form },
-            { self.cursor.x, self.cursor.y },
-            self.atlas)!;
 }
 
 fn void! Term.processInput(&self) {

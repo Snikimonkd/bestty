@@ -1,6 +1,9 @@
-module parser;
+module scrollback;
 
+import ring;
 import logger;
+import parser;
+
 import std::collections::list;
 
 def UTF8String = List(<Char32>);
@@ -16,14 +19,12 @@ struct Cursor {
 }
 
 struct Scrollback {
-    // TODO for now dstring is ok, need to change to something more efficient like linkedlist of dstrings array maybe?
-    List(<Char32>) buf;
+    Ring(<UTF8String>) buf;
     Cursor cursor;
 }
 
-fn void Scrollback.init(&self, Allocator allocator = allocator::heap()) {
-    self.buf.new_init(1024, allocator);
-
+fn void Scrollback.init(&self, usz size, Allocator allocator = allocator::heap()) {
+    self.buf.init(size, allocator);
     self.cursor = {
         .form = '█',
         .x = 0,
@@ -39,7 +40,7 @@ fn void Scrollback.init(&self, Allocator allocator = allocator::heap()) {
 /// }
 
 fn void Scrollback.destroy(&self) {
-    self.buf.free();
+    self.buf.destroy();
 }
 
 fn void! Scrollback.handle(&self, PtyAction action) {
@@ -64,12 +65,14 @@ fn void! Scrollback.handle(&self, PtyAction action) {
 fn void! Scrollback.handle_execute(&self, char c) {
     switch (c) {
         case '\n':
-            self.push('\n');
+            self.cursor.x = 0;
+            self.cursor.y += 1;
+            self.buf.push("");
         case '\t':
             // todo: handle this
             self.push('\t');
         case '\b':
-            self.buf.pop()!;
+            self.buf.pop();
         default:
             logger::printfn("unknown execute action: %d", c);
             return;
@@ -77,7 +80,12 @@ fn void! Scrollback.handle_execute(&self, char c) {
 }
 
 fn void Scrollback.push(&self, Char32 c) {
-    self.buf.push(c);
+    if (self.buf.buf[self.cursor.y].len() < self.cursor.x) {
+        self.buf.buf[self.cursor.y].push(c);
+        return;
+    }
+
+    self.buf.buf[self.cursor.y].insert_at(c, self.cursor.x);
 }
 
 fn List(<UTF8String>) Scrollback.render(&self, usz width, usz height, Allocator allocator = allocator::heap()) {
