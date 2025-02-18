@@ -25,7 +25,8 @@ struct GlyphsAtlas {
 
     HashMap(<Char32, Glyph>)* glyphs;
 
-    int maxHeight;
+    usz maxHeight;
+    usz maxWidth;
 }
 
 fn void! GlyphsAtlas.new_init(&self, CUInt fontSize = 32, int width = 800, int height = 600) => self.init(fontSize, width, height, allocator::heap());
@@ -63,8 +64,7 @@ fn void! GlyphsAtlas.init(&self, CUInt fontSize, int width, int height, Allocato
     }
 
     // load first 128 characters of ASCII set
-    for (char c = 32; c < 128; c++)
-    {
+    for (char c = 32; c < 128; c++) {
         self.load_unicode(c)!;
     }
 //    self.load_unicode('█')!;
@@ -146,6 +146,9 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
     (*self.glyphs)[charcode] = glyph;
     if (self.face.glyph.bitmap_top > self.maxHeight) {
         self.maxHeight = self.face.glyph.bitmap_top;
+    }
+    if (self.face.glyph.advance.x >> 6 > self.maxWidth) {
+        self.maxWidth = (usz)self.face.glyph.advance.x >> 6;
     }
 
     gl::bindTexture(gl::GL_TEXTURE_2D, 0);

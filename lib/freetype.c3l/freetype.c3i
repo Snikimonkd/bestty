@@ -587,7 +587,7 @@ macro Encoding encTag($a, $b, $c, $d) {
     return (Encoding)(($a << 24) | ($b << 16) | ($c << 8) | $d);
 }
 
-const Encoding ENCODING_NONE = (Encoding)encTag(0, 0, 0, 0);
+const Encoding ENCODING_NONE = encTag(0, 0, 0, 0);
 const Encoding ENCODING_MS_SYMBOL = encTag('s', 'y', 'm', 'b');
 const Encoding ENCODING_UNICODE = encTag('u', 'n', 'i', 'c');
 const Encoding ENCODING_SJIS = encTag('s', 'j', 'i', 's');

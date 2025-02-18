@@ -5,6 +5,7 @@ import window;
 import logger;
 import pty;
 import parser;
+import scrollback;
 import glfw;
 import opengl;
 import std::collections::list;
@@ -17,24 +18,33 @@ struct Term {
     window::Window window;
     pty::Pty pty;
     parser::Parser parser;
-    parser::Scrollback scrollback;
+    scrollback::Scrollback scrollback;
 
     HashMap(<int, Time>)* keyLogs;
 
-    int leftPadding;
-    int topPadding;
+    usz leftPadding;
+    usz topPadding;
+    usz fontSize;
 }
 
-fn void! Term.init(&self, int width = 800, int height = 600, Allocator allocator = allocator::heap()) {
+fn void! Term.init(&self, usz fontSize, int width = 800, int height = 600, Allocator allocator = allocator::heap()) {
     self.allocator = allocator;
+    self.fontSize = fontSize;
     self.window.init(width, height)!;
     self.pty.init()!;
-    self.scrollback.init();
+    self.atlas.new_init((CUInt)self.fontSize, self.window.width, self.window.height)!;
+    font::Glyph ch = (*self.atlas.glyphs)['#']!;
+    self.scrollback.init(
+//        (usz)((float)self.window.width/(*self.atlas.glyphs)['|'].size.x),
+//        (usz)((float)self.window.height/(*self.atlas.glyphs)['|'].size.y),
+        self.window.width/(ch.advance >> 6),
+        self.window.height / self.atlas.maxHeight,
+        allocator,
+    );
     self.parser.init();
     self.keyLogs = allocator::new(allocator, HashMap(<int, time::Time>));
     self.keyLogs.new_init();
 
-    self.atlas.new_init(32, self.window.width, self.window.height)!;
     self.leftPadding = 5;
     self.topPadding = 5;
 }
@@ -87,20 +97,19 @@ fn void! Term.readFromPty(&self) {
 }
 
 fn void! Term.drawScrollback(&self) {
-    List(<UTF8String>) fromScrollback = self.scrollback.render(10000, self.window.height/self.atlas.maxHeight, self.allocator);
-    defer {
-        for (int i = 0; i < fromScrollback.len(); i++) {
-            fromScrollback[i].free();
-        }
-        fromScrollback.free();
+    for (usz i = 0; i < self.scrollback.height; i++) {
+        self.window.renderText(
+            self.scrollback.lines[i],
+            { self.leftPadding, self.window.height - self.atlas.maxHeight*(int)i - self.window.top - self.topPadding },
+            self.atlas,
+        )!;
     }
 
-    for (int i = 0; i < fromScrollback.len(); i++) {
-        self.window.renderText(
-                fromScrollback[i].array_view(),
-                { self.leftPadding, self.window.height - self.atlas.maxHeight*i - self.window.top - self.topPadding },
-                self.atlas)!;
-    }
+    self.window.renderText(
+        {'█'},
+        { self.leftPadding + self.scrollback.cursor.x*16, self.window.height - self.atlas.maxHeight*(int)self.scrollback.cursor.y - self.window.top - self.topPadding },
+        self.atlas,
+    )!;
 }
 
 fn void! Term.processInput(&self) {

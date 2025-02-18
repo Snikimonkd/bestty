@@ -21,7 +21,7 @@ fn int main(String[] args) {
         //    terminal.run()!!;
 
         Term term;
-        term.init()!!;
+        term.init(32)!!;
         defer term.destroy();
 
         term.run()!!;

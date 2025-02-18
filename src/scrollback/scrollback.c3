@@ -6,7 +6,7 @@ import parser;
 
 import std::collections::list;
 
-def UTF8String = List(<Char32>);
+def UTF8String = Char32[];
 
 fault ScrollbackError {
     UNIMPLEMENTED_ACTION,
@@ -14,17 +14,29 @@ fault ScrollbackError {
 
 struct Cursor {
     Char32 form;
-    int x;
-    int y;
+    usz x;
+    usz y;
 }
 
 struct Scrollback {
-    Ring(<UTF8String>) buf;
+    // Ring(<UTF8String>) lines;
+    UTF8String[] lines;
     Cursor cursor;
+    usz width;
+    usz height;
+    Allocator allocator;
 }
 
-fn void Scrollback.init(&self, usz size, Allocator allocator = allocator::heap()) {
-    self.buf.init(size, allocator);
+fn void Scrollback.init(&self, usz width, usz height, Allocator allocator = allocator::heap()) {
+    logger::printfn("[scrollback] width: %s, height: %s", width, height);
+    self.allocator = allocator;
+    self.width = width;
+    self.height = height;
+    self.lines = allocator::new_array(allocator, UTF8String, height);
+    for (usz i = 0; i < height; i++) {
+        // one more for '\0'
+        self.lines[i] = allocator::new_array(allocator, Char32, width+1);
+    }
     self.cursor = {
         .form = '█',
         .x = 0,
@@ -32,22 +44,17 @@ fn void Scrollback.init(&self, usz size, Allocator allocator = allocator::heap()
     };
 }
 
-/// fn void! Term.drawCursor(&self) {
-///     self.window.renderText(
-///             { self.cursor.form },
-///             { self.cursor.x, self.cursor.y },
-///             self.atlas)!;
-/// }
-
 fn void Scrollback.destroy(&self) {
-    self.buf.destroy();
+    for (usz i = 0; i < self.height; i++) {
+        allocator::free(self.allocator, self.lines[i]);
+    }
+    allocator::free(self.allocator, self.lines);
 }
 
 fn void! Scrollback.handle(&self, PtyAction action) {
     switch (action.type) {
         case PRINT:
-            self.push((Char32)action.payload.print);
-            // logger::printfn("print: %s, %c", (Char32)action.payload.print, (Char32)action.payload.print);
+            self.push((Char32)action.payload.print)!;
             return;
         case NONE:
             return;
@@ -62,58 +69,58 @@ fn void! Scrollback.handle(&self, PtyAction action) {
     }
 }
 
+fn void! Scrollback.spin(&self) {
+    // empty the first line
+    self.lines[0][0] = '\0';
+    // make the last line empty
+    UTF8String tmp = self.lines[0];
+    for (usz i = 0; i < self.height-1; i++) {
+        self.lines[i] = self.lines[i+1];
+    }
+    self.lines[self.height-1] = tmp;
+}
+
 fn void! Scrollback.handle_execute(&self, char c) {
     switch (c) {
         case '\n':
+            // end current line
+            self.lines[self.cursor.y][self.cursor.x] = '\0';
+
+            // move cursor to the next line
             self.cursor.x = 0;
-            self.cursor.y += 1;
-            self.buf.push("");
+            // if elaready on the last line
+            if (self.cursor.y == self.height-1) {
+                self.spin()!;
+            } else {
+                self.cursor.y++;
+            }
         case '\t':
             // todo: handle this
-            self.push('\t');
+            self.push('\t')!;
         case '\b':
-            self.buf.pop();
+            // wtf???
+            logger::printfn("unexpected b");
         default:
             logger::printfn("unknown execute action: %d", c);
             return;
     }
 }
 
-fn void Scrollback.push(&self, Char32 c) {
-    if (self.buf.buf[self.cursor.y].len() < self.cursor.x) {
-        self.buf.buf[self.cursor.y].push(c);
-        return;
-    }
-
-    self.buf.buf[self.cursor.y].insert_at(c, self.cursor.x);
-}
-
-fn List(<UTF8String>) Scrollback.render(&self, usz width, usz height, Allocator allocator = allocator::heap()) {
-    List(<UTF8String>) ret;
-    ret.new_init(256, allocator);
-    UTF8String str;
-    str.new_init(256, allocator);
-    for (long i = self.buf.len()-1; i >= 0; i--) {
-        if (ret.len() == height) {
-            str.free();
-            ret.reverse();
-            return ret;
-        }
-        // TODO: line wrapping
-        if (self.buf[i] == '\n') {
-            str.reverse();
-            ret.push(str);
-            UTF8String tmp;
-            tmp.new_init(256, allocator);
-            str = tmp;
+fn void! Scrollback.push(&self, Char32 c) {
+    if (self.cursor.x == self.width-1) {
+        // handle line wrapping
+        self.cursor.x = 0;
+        if (self.cursor.y == self.height-1) {
+            self.spin()!;
         } else {
-            str.push(self.buf[i]);
+            self.cursor.y++;
         }
+        self.lines[self.cursor.y][self.cursor.x] = c;
+        self.lines[self.cursor.y][self.cursor.x+1] = '\0';
+    } else {
+        self.lines[self.cursor.y][self.cursor.x] = c;
+        self.lines[self.cursor.y][self.cursor.x+1] = '\0';
     }
-
-    str.reverse();
-    ret.push(str);
-
-    ret.reverse();
-    return ret;
+    self.cursor.x++;
 }
+

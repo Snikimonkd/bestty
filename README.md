@@ -16,5 +16,6 @@ My attempt to implement a terminal emulator in [c3](https://c3-lang.org).
 - - [x] use opengl to render window
 - - [ ] use freetype for font rendering
 - - - [x] create freetype bindings (https://github.com/c3lang/vendor/pull/45)
-- - - [ ] render text with freetype
+- - - [v] render text with freetype (it turns out freetype is shit in terms of text rendering)
+- - - [ ] write self made shader to render text properly (???)
 

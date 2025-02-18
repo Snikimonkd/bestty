@@ -35,3 +35,15 @@ fn void Ring.pop(&self) {
         self.written--;
     }
 }
+
+macro Type Ring.@item_at(&self, usz index) @operator([]) {
+	return self.buf[index];
+}
+
+fn Type* Ring.get_ref(&self, usz index) @operator(&[]) @inline {
+	return &self.entries[index];
+}
+
+fn void Ring.set(&self, usz index, Type value) @operator([]=) {
+	self.entries[index] = value;
+}

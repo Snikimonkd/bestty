@@ -55,6 +55,7 @@ fn void! Window.init(&self,
     glfw::windowHint(glfw::CONTEXT_VERSION_MAJOR, 3);
     glfw::windowHint(glfw::CONTEXT_VERSION_MINOR, 3);
     glfw::windowHint(glfw::OPENGL_PROFILE, glfw::OPENGL_CORE_PROFILE);
+    glfw::windowHint(glfw::RESIZABLE, glfw::FALSE);
 
     $if env::DARWIN:
         glfw::windowHint(glfw::OPENGL_FORWARD_COMPAT, gl::GL_TRUE);
@@ -111,7 +112,49 @@ fn void Window.swapBuffers(&self) {
     glfw::swapBuffers(self.handle);
 }
 
-fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas atlas)
+fn void! Window.renderCursor(&self, Char32 shape, int[<2>] pos, font::GlyphsAtlas atlas) {
+    // activate corresponding render state
+    gl::useProgram(atlas.programID);
+    gl::uniform3f(gl::getUniformLocation(atlas.programID, "out_color"), self.fg.r, self.fg.g, self.fg.b);
+    gl::activeTexture(gl::GL_TEXTURE0);
+    gl::bindVertexArray(self.vao);
+
+    font::Glyph ch;
+    if (!atlas.glyphs.has_key(shape)) {
+        ch = atlas.load_unicode(shape)!;
+    } else {
+        ch = (*atlas.glyphs)[shape]!;
+    }
+
+    float xpos = (float)pos.x + ch.bearing.x;
+    float ypos = (float)pos.y - (float)(ch.size.y - ch.bearing.y);
+
+    float w = ch.size.x;
+    float h = ch.size.y;
+    float[4][6] vertices = {
+        { xpos,     ypos + h,   0.0f, 0.0f },
+        { xpos,     ypos,       0.0f, 1.0f },
+        { xpos + w, ypos,       1.0f, 1.0f },
+
+        { xpos,     ypos + h,   0.0f, 0.0f },
+        { xpos + w, ypos,       1.0f, 1.0f },
+        { xpos + w, ypos + h,   1.0f, 0.0f }
+    };
+    // render glyph texture over quad
+    gl::bindTexture(gl::GL_TEXTURE_2D, ch.textureID);
+    // update content of VBO memory
+    gl::bindBuffer(gl::GL_ARRAY_BUFFER, self.vbo);
+    gl::bufferSubData(gl::GL_ARRAY_BUFFER, 0, 4*6*float.sizeof, &vertices);
+
+    gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
+    // render quad
+    gl::drawArrays(gl::GL_TRIANGLES, 0, 6);
+
+    gl::bindVertexArray(0);
+    gl::bindTexture(gl::GL_TEXTURE_2D, 0);
+}
+
+fn void! Window.renderText(&self, Char32[] text, usz[<2>] pos, font::GlyphsAtlas atlas)
 {
     // activate corresponding render state
     gl::useProgram(atlas.programID);
@@ -123,6 +166,9 @@ fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas
     for (int i = 0; i < text.len; i++)
     {
         Char32 c = text[i];
+        if (c == '\0') {
+            break;
+        }
         font::Glyph ch;
         if (!atlas.glyphs.has_key(c)) {
             ch = atlas.load_unicode(c)!;
@@ -160,7 +206,7 @@ fn void! Window.renderText(&self, Char32[] text, int[<2>] pos, font::GlyphsAtlas
         gl::drawArrays(gl::GL_TRIANGLES, 0, 6);
 
         // move
-        pos.x += (ch.advance >> 6);
+        pos.x += (usz)(ch.advance >> 6);
     }
     gl::bindVertexArray(0);
     gl::bindTexture(gl::GL_TEXTURE_2D, 0);
