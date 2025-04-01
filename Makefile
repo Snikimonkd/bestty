@@ -1,5 +1,5 @@
 run:
-	c3c run
+	c3c run -v
 
 t:
 	c3c test

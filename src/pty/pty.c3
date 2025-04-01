@@ -13,7 +13,7 @@ import std::collections::list;
 
 const usz BUF_SIZE = 1024;
 
-fault PtyError {
+faultdef
     EXEC_SHELL_ERROR,
     FORK_ERROR,
     WRITE_ERROR,
@@ -21,11 +21,9 @@ fault PtyError {
     READ_ERROR,
     GET_FLAGS_ERROR,
     SET_FLAGS_ERROR,
+    EMPTY;
 
-    EMPTY,
-}
-
-def Fd = CInt;
+typedef Fd = CInt;
 
 struct Termios {
     //    tcflag_t        c_iflag;
@@ -50,10 +48,10 @@ struct Termios {
 }
 
 struct Winsize {
-    ushort ws_row;	/* rows, in characters */
-    ushort ws_col;	/* columns, in characters */
-    ushort ws_xpixel;	/* horizontal size, pixels */
-    ushort ws_ypixel;	/* vertical size, pixels */
+    CUShort ws_row;
+    CUShort ws_col;
+    CUShort ws_xpixel;
+    CUShort ws_ypixel;
 }
 
 extern fn CInt forkpty(CInt *amaster, char *name, Termios *termp, Winsize *winp);
@@ -69,14 +67,16 @@ struct Pty {
     Fd master;
 }
 
-fn void! Pty.init(&self) {
-    Winsize ws = Winsize{};
-    // TODO: termios
+fn void? Pty.init(&self, usz row, usz col) {
+    Winsize ws = {
+        .ws_row = (ushort)row,
+        .ws_col = (ushort)col,
+    };
 
-    int pid = forkpty(&self.master, null, null, &ws);
+    int pid = forkpty((CInt*)&self.master, null, null, &ws);
     if (pid == -1) {
         logger::printfn("can't fork pty");
-        return PtyError.FORK_ERROR?;
+        return FORK_ERROR?;
     }
 
     // child
@@ -90,27 +90,27 @@ fn void! Pty.init(&self) {
         CInt res = execvp(*tmp[0], tmp);
         if (res == -1) {
             logger::printfn("[SLAVE] can't exec shell");
-            return PtyError.EXEC_SHELL_ERROR?;
+            return EXEC_SHELL_ERROR?;
         }
 
         thread::sleep(time::SEC);
         logger::printfn("[SLAVE] i can't be here");
     }
 
-    int flags = fcntl(self.master, F_GETFL, 0);
+    int flags = fcntl((CInt)self.master, F_GETFL, 0);
     if (flags == -1) {
         logger::printfn("can't get master fd flags: %s", libc::errno());
-        return PtyError.GET_FLAGS_ERROR?;
+        return GET_FLAGS_ERROR?;
     }
 
-    int a = fcntl(self.master, F_SETFL, flags | os::O_NONBLOCK);
+    int a = fcntl((CInt)self.master, F_SETFL, flags | os::O_NONBLOCK);
     if (a == -1) {
         logger::printfn("can't set master fd flags: %s", libc::errno());
-        return PtyError.SET_FLAGS_ERROR?;
+        return SET_FLAGS_ERROR?;
     }
 }
 
-fn List(<char>)! Pty.read(&self, Allocator allocator = allocator::heap()) {
+fn List{char}? Pty.read(&self, Allocator allocator = allocator::heap()) {
     Poll[] polls = {
         {
             .socket = (NativeSocket)self.master,
@@ -125,21 +125,21 @@ fn List(<char>)! Pty.read(&self, Allocator allocator = allocator::heap()) {
     }
 
     char[BUF_SIZE] buf;
-    isz s = libc::read(self.master, &buf, BUF_SIZE);
+    isz s = libc::read((CInt)self.master, &buf, BUF_SIZE);
     if (s == -1 && libc::errno() != errno::EAGAIN) {
         logger::printfn("error while reading errno: %s", libc::errno());
-        return PtyError.READ_ERROR?;
+        return READ_ERROR?;
     }
     if (s == 0) {
         return {};
     }
 
-    List(<char>) ret;
-    ret.new_init_with_array(buf[0..s-1], allocator);
+    List{char} ret;
+    ret.init_with_array(allocator, buf[0..s-1]);
     return ret;
 }
 
-fn void! Pty.write(&self, char in) {
+fn void? Pty.write(&self, char in) {
     Poll[] polls = {
         {
             .socket = (NativeSocket)self.master,
@@ -150,14 +150,15 @@ fn void! Pty.write(&self, char in) {
     ulong n = net::poll(polls, 0)!!;
     if (n != 1 || polls[0].revents != net::POLL_EVENT_WRITE) {
         logger::printfn("write poll res n: %s, revents: %s", n, polls[0].revents);
-        return PtyError.PTY_NOT_READY?;
+        return PTY_NOT_READY?;
     }
 
+    char[1] tmp = {in};
 
-    isz res = libc::write(self.master, &&char[1]{in}, 1);
+    isz res = libc::write((CInt)self.master, &tmp, 1);
     if (res != 1) {
         logger::printfn("can't write to master fd: %s", libc::errno());
-        return PtyError.WRITE_ERROR?;
+        return WRITE_ERROR?;
     }
 
 //    isz written = 0;
@@ -166,7 +167,7 @@ fn void! Pty.write(&self, char in) {
 //        isz res = libc::write(self.master, (char*)cmd[written:len], len-written);
 //        if (res == -1) {
 //            logger::printfn("can't write to master fd: %s", libc::errno());
-//            return PtyError.WRITE_ERROR?;
+//            return WRITE_ERROR?;
 //        }
 //        written += res;
 //    }

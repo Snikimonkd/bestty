@@ -39,9 +39,9 @@ struct Transition {
     Action action;
 }
 
-def StatesTransitions = Transition[State.elements];
-def CharsStatesTransitions = StatesTransitions[char.max];
-distinct TransitionTable = CharsStatesTransitions;
+typedef StatesTransitions = Transition[State.elements];
+typedef CharsStatesTransitions = StatesTransitions[char.max];
+typedef TransitionTable = CharsStatesTransitions;
 
 fn void TransitionTable.set_one(&self, char c, State prev, State next, Action action) {
     (*self)[(int)c][(int)prev.ordinal] = { .state = next, .action = action };

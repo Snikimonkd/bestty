@@ -11,13 +11,12 @@ struct Shader {
     CUInt id;
 }
 
-fault ShaderError {
+faultdef
     VERTEX_SHADER_COMPILATION_ERROR,
     FRAGMENT_SHADER_COMPILATION_ERROR,
-    PROGRAM_LINKING_ERROR,
-}
+    PROGRAM_LINKING_ERROR;
 
-def Mat = float[4][4];
+typedef Mat = float[4][4];
 
 fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
     for (int i = 0; i < 4; i++) {
@@ -32,7 +31,7 @@ fn void Mat.ortho(&self, float left, float right, float bottom, float top) {
     (*self)[3][1] = -(top + bottom) / (top - bottom);
 }
 
-fn CUInt! compileAndLinkShaders(int width, int height) {
+fn CUInt? compileAndLinkShaders(int width, int height) {
     CUInt vertex, fragment;
     CInt ok;
     // vertex shader
@@ -45,7 +44,7 @@ fn CUInt! compileAndLinkShaders(int width, int height) {
         char[1024] infoLog;
         gl::getShaderInfoLog(vertex, 1024, null, &infoLog);
         logger::printfn("can't compile vertex shader: %s", (ZString)&infoLog);
-        return ShaderError.VERTEX_SHADER_COMPILATION_ERROR?;
+        return VERTEX_SHADER_COMPILATION_ERROR?;
     }
 
     // fragment Shader
@@ -58,7 +57,7 @@ fn CUInt! compileAndLinkShaders(int width, int height) {
         char[1024] infoLog;
         gl::getShaderInfoLog(fragment, 1024, null, &infoLog);
         logger::printfn("can't compile frangments shader: %s", (ZString)&infoLog);
-        return ShaderError.FRAGMENT_SHADER_COMPILATION_ERROR?;
+        return FRAGMENT_SHADER_COMPILATION_ERROR?;
     }
 
     // shader Program
@@ -72,7 +71,7 @@ fn CUInt! compileAndLinkShaders(int width, int height) {
         char[1024] infoLog;
         gl::getProgramInfoLog(id, 1024, null, &infoLog);
         logger::printfn("can't compile program: %s", (ZString)&infoLog);
-        return ShaderError.PROGRAM_LINKING_ERROR?;
+        return PROGRAM_LINKING_ERROR?;
     }
 
     // delete the shaders as they're linked into our program now and no longer necessary
@@ -82,7 +81,7 @@ fn CUInt! compileAndLinkShaders(int width, int height) {
     Mat projection;
     projection.ortho(0.0f, (float)width, 0.0f, (float)height);
     gl::useProgram(id);
-    gl::uniformMatrix4fv(gl::getUniformLocation(id, "projection"), 1, (bool)gl::GL_FALSE, &projection);
+    gl::uniformMatrix4fv(gl::getUniformLocation(id, "projection"), 1, gl::GL_FALSE, (GLfloat*)&projection);
 
     return id;
 }

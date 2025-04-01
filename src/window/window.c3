@@ -1,33 +1,30 @@
 module window;
 
-import glfw;
 import opengl;
+import glfw;
 
 import logger;
 import font;
 
-distinct Color = float[<4>];
-
-macro Color Color.fromHexRGBA(int $r, int $g, int $b, int $a) @operator(construct)
-{
-    return Color.fromFloatRGBA((float)$r, (float)$g, (float)$b, (float)$a);
+fn float[<4>] fromHexRGBA(int r, int g, int b, int a) {
+    return fromFloatRGBA((float)r, (float)g, (float)b, (float)a);
 }
 
-macro Color Color.fromFloatRGBA(float $r, float $g, float $b, float $a) @operator(construct)
-{
-    return Color{ $r/255.0f, $g/255.0f, $b/255.0f, $a/255.0f };
+macro float[<4>] fromFloatRGBA(float r, float g, float b, float a) {
+    float[<4>] tmp = { r/255.0f, g/255.0f, b/255.0f, a/255.0f };
+    return tmp;
 }
 
-fault GLError {
+faultdef
     GL_INIT_ERROR,
-    GL_CREATE_WINDOW_ERROR,
-}
+    GL_CREATE_WINDOW_ERROR;
+
 
 struct Window {
-    glfw::Window* handle;
+    glfw::GlfwWindow* handle;
 
-    Color bg;
-    Color fg;
+    float[<4>] bg;
+    float[<4>] fg;
 
     CUInt vao;
     CUInt vbo;
@@ -37,20 +34,21 @@ struct Window {
     int top;
 }
 
-fn void! Window.init(&self,
-        int width = 800,
-        int height = 600,
-        Color bg = Color.fromHexRGBA(0x28, 0x28, 0x28, 0xff),
-        Color fg = Color.fromHexRGBA(0xfb, 0xf1, 0xc7, 0xff),
+fn void? Window.init(&self,
+        int width = 1200,
+        int height = 800,
+        float[<4>] bg = fromHexRGBA(0x28, 0x28, 0x28, 0xff),
+        float[<4>] fg = fromHexRGBA(0xfb, 0xf1, 0xc7, 0xff),
         ) {
     self.width = width;
     self.height = height;
     self.bg = bg;
     self.fg = fg;
 
+    opengl::loadGL((GLLoadFn)&glfw::getProcAddress);
     if (!glfw::init()) {
         logger::printfn("getError: %s", gl::getError());
-        return GLError.GL_INIT_ERROR?;
+        return GL_INIT_ERROR?;
     }
     glfw::windowHint(glfw::CONTEXT_VERSION_MAJOR, 3);
     glfw::windowHint(glfw::CONTEXT_VERSION_MINOR, 3);
@@ -62,17 +60,19 @@ fn void! Window.init(&self,
     $endif
 
     // glfw window creation
-    self.handle = glfw::createWindow(self.width, self.height, "bestty", null, null);
+    self.handle = glfw::createWindow(self.width, self.height, "ttyob", null, null);
     if (!self.handle) {
+        opengl::loadGL((GLLoadFn)&glfw::getProcAddress);
         glfw::terminate();
         logger::printfn("can't create window");
-        return GLError.GL_CREATE_WINDOW_ERROR?;
+        return GL_CREATE_WINDOW_ERROR?;
     }
     glfw::makeContextCurrent(self.handle);
 
     glfw::getWindowFrameSize(self.handle, null, &self.top, null, null);
 
     // OpenGL state
+    opengl::loadGL((GLLoadFn)&glfw::getProcAddress);
     gl::enable(gl::GL_CULL_FACE);
     gl::enable(gl::GL_BLEND);
     gl::blendFunc(gl::GL_SRC_ALPHA, gl::GL_ONE_MINUS_SRC_ALPHA);
@@ -85,7 +85,7 @@ fn void! Window.init(&self,
     gl::bindBuffer(gl::GL_ARRAY_BUFFER, self.vbo);
     gl::bufferData(gl::GL_ARRAY_BUFFER, float.sizeof * 6 * 4, null, gl::GL_DYNAMIC_DRAW);
     gl::enableVertexAttribArray(0);
-    gl::vertexAttribPointer(0, 4, gl::GL_FLOAT, (bool)gl::GL_FALSE, 4 * float.sizeof, null);
+    gl::vertexAttribPointer(0, 4, gl::GL_FLOAT, gl::GL_FALSE, 4 * float.sizeof, null);
     gl::bindBuffer(gl::GL_ARRAY_BUFFER, 0);
     gl::bindVertexArray(0);
 }
@@ -112,7 +112,7 @@ fn void Window.swapBuffers(&self) {
     glfw::swapBuffers(self.handle);
 }
 
-fn void! Window.renderCursor(&self, Char32 shape, int[<2>] pos, font::GlyphsAtlas atlas) {
+fn void? Window.renderCursor(&self, Char32 shape, int[<2>] pos, font::GlyphsAtlas atlas) {
     // activate corresponding render state
     gl::useProgram(atlas.programID);
     gl::uniform3f(gl::getUniformLocation(atlas.programID, "out_color"), self.fg.r, self.fg.g, self.fg.b);
@@ -154,7 +154,7 @@ fn void! Window.renderCursor(&self, Char32 shape, int[<2>] pos, font::GlyphsAtla
     gl::bindTexture(gl::GL_TEXTURE_2D, 0);
 }
 
-fn void! Window.renderText(&self, Char32[] text, usz[<2>] pos, font::GlyphsAtlas atlas)
+fn void? Window.renderText(&self, Char32[] text, usz[<2>] pos, font::GlyphsAtlas atlas)
 {
     // activate corresponding render state
     gl::useProgram(atlas.programID);
@@ -166,7 +166,7 @@ fn void! Window.renderText(&self, Char32[] text, usz[<2>] pos, font::GlyphsAtlas
     for (int i = 0; i < text.len; i++)
     {
         Char32 c = text[i];
-        if (c == '\0') {
+        if (c == '\n' ||  c == '\0') {
             break;
         }
         font::Glyph ch;
@@ -206,7 +206,7 @@ fn void! Window.renderText(&self, Char32[] text, usz[<2>] pos, font::GlyphsAtlas
         gl::drawArrays(gl::GL_TRIANGLES, 0, 6);
 
         // move
-        pos.x += (usz)(ch.advance >> 6);
+        pos.x += (usz)ch.advance;
     }
     gl::bindVertexArray(0);
     gl::bindTexture(gl::GL_TEXTURE_2D, 0);

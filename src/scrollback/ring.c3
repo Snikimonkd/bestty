@@ -1,4 +1,4 @@
-module ring(<Type>);
+module ring{Type};
 
 struct Ring {
     usz written;
@@ -7,7 +7,7 @@ struct Ring {
 	Type[] buf;
 }
 
-fn void Ring.new_init(&self, usz size) {
+fn void Ring.init(&self, usz size) {
     return self.init(size, allocator::heap());
 }
 

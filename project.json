@@ -1,27 +1,12 @@
 {
   "langrev": "1",
-  "warnings": [
-    "no-unused"
-  ],
-  "dependency-search-paths": [
-    "lib"
-  ],
-  "dependencies": [
-    "raylib5",
-    "opengl",
-    "glfw",
-    "freetype"
-  ],
-  "authors": [
-    "Snikimonkd"
-  ],
+  "warnings":  [ "no-unused" ],
+  "dependency-search-paths":  [ "lib" ],
+  "dependencies":  [ "opengl", "freetype", "glfw" ],
+  "authors":  [ "Snikimonkd" ],
   "version": "0.1.0",
-  "sources": [
-    "src/**"
-  ],
-  "test-sources": [
-    "test/**"
-  ],
+  "sources":  [ "src/**" ],
+  "test-sources":  [ "test/**" ],
   "output": "build",
   "targets": {
     "bestty": {
@@ -31,4 +16,3 @@
   "cpu": "generic",
   "opt": "O0"
 }
-

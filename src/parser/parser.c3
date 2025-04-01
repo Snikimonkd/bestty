@@ -2,10 +2,9 @@ module parser;
 
 import logger;
 
-fault ParserError {
+faultdef
     UNIMPLEMENTED_PARSER_ACTION,
-    UNIMPLEMENTED_PARSER_STATE,
-}
+    UNIMPLEMENTED_PARSER_STATE;
 
 struct Parser {
     State state;
@@ -44,7 +43,7 @@ struct PtyAction {
     ActionPayload payload;
 }
 
-fn PtyAction! Parser.next(&self, char c) {
+fn PtyAction? Parser.next(&self, char c) {
     Transition transition = t[c][self.state.ordinal];
     logger::printfn("from: %s with char: %d to: %s, with action: %s", self.state, c, transition.state, transition.action);
 
@@ -61,7 +60,7 @@ fn PtyAction! Parser.next(&self, char c) {
     return self.handle_action(transition.action, c);
 }
 
-fn void! Parser.exit_old_state(&self) {
+fn void? Parser.exit_old_state(&self) {
     switch (self.state) {
         case GROUND:
             return;
@@ -73,11 +72,11 @@ fn void! Parser.exit_old_state(&self) {
             return;
         default:
             logger::printfn("can't exit parser state: %s", self.state);
-            return ParserError.UNIMPLEMENTED_PARSER_STATE?;
+            return UNIMPLEMENTED_PARSER_STATE?;
     }
 }
 
-fn void! Parser.entry_new_state(&self, State new_state) {
+fn void? Parser.entry_new_state(&self, State new_state) {
     switch (new_state) {
         case GROUND:
             return;
@@ -93,11 +92,11 @@ fn void! Parser.entry_new_state(&self, State new_state) {
             return;
         default:
             logger::printfn("can't entry parser state: %s", new_state);
-            return ParserError.UNIMPLEMENTED_PARSER_STATE?;
+            return UNIMPLEMENTED_PARSER_STATE?;
     }
 }
 
-fn PtyAction! Parser.handle_action(&self, Action action, char c) {
+fn PtyAction? Parser.handle_action(&self, Action action, char c) {
     switch (action) {
         case PRINT:
             return { .type = PRINT, .payload = { .print = c } };
@@ -151,6 +150,6 @@ fn PtyAction! Parser.handle_action(&self, Action action, char c) {
             return { .type = EXECUTE, .payload = { .execute = c } };
         default:
             logger::printfn("unknown parser action: %s", action);
-            return ParserError.UNIMPLEMENTED_PARSER_ACTION?;
+            return UNIMPLEMENTED_PARSER_ACTION?;
     }
 }

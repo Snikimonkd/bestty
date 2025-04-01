@@ -1,7 +1,7 @@
 module freetype::ft;
 
 // typedef int FT_Error;
-fault Error {
+faultdef
     OK,
     CANNOT_OPEN_RESOURCE,
     UNKNOWN_FILE_FORMAT,
@@ -94,10 +94,9 @@ fault Error {
     MISSING_BBX_FIELD,
     BBX_TOO_BIG,
     CORRUPTED_FONT_HEADER,
-    CORRUPTED_FONT_GLYPHS,
-}
+    CORRUPTED_FONT_GLYPHS;
 
-const Error[*] CINT_TO_ERROR = {
+const fault[*] CINT_TO_ERROR = {
     [0] = OK,
     [0x01] = CANNOT_OPEN_RESOURCE,
     [0x02] = UNKNOWN_FILE_FORMAT,
@@ -265,7 +264,7 @@ const LOAD_BITMAP_METRICS_ONLY =                ( 1L << 22 );
 // #define FT_LOAD_NO_SVG                       ( 1L << 24 )
 const LOAD_NO_SVG =                             ( 1L << 24 );
 
-def RenderMode = CInt;
+alias RenderMode = CInt;
 const RenderMode RENDER_MODE_NORMAL = 0;
 const RenderMode RENDER_MODE_LIGHT = 1;
 const RenderMode RENDER_MODE_MONO = 2;
@@ -275,33 +274,33 @@ const RenderMode RENDER_MODE_SDF = 5;
 const RenderMode RENDER_MODE_MAX = 6;
 
 
-//typedef signed short FT_Short;
-def Short = CShort;
-// typedef signed int FT_Int;
-def Int = CInt;
-// typedef char FT_String;
-def String = CChar;
-// typedef unsigned int FT_UInt;
-def UInt = CUInt;
-// typedef unsigned short FT_UShort;
-def UShort = CUShort;
-// typedef signed long FT_Long;
-def Long = CLong;
-// typedef unsigned long FT_ULong;
-def ULong = CULong;
-// typedef signed int FT_Int32;
-def Int32 = CInt;
-// typedef unsigned int FT_UInt32;
-def UInt32 = CUInt;
-// typedef signed long FT_Fixed;
-def Fixed = CLong;
-// typedef signed long FT_F26Dot6;
-def F26Dot6 = CLong;
-// typedef signed long FT_Pos;
-def Pos = CLong;
+//typetypedef signed short FT_Short;
+alias Short = CShort;
+// typealias signed int FT_Int;
+alias Int = CInt;
+// typealias char FT_String;
+alias String = CChar;
+// typealias unsigned int FT_UInt;
+alias UInt = CUInt;
+// typealias unsigned short FT_UShort;
+alias UShort = CUShort;
+// typealias signed long FT_Long;
+alias Long = CLong;
+// typealias unsigned long FT_ULong;
+alias ULong = CULong;
+// typealias signed int FT_Int32;
+alias Int32 = CInt;
+// typealias unsigned int FT_UInt32;
+alias UInt32 = CUInt;
+// typealias signed long FT_Fixed;
+alias Fixed = CLong;
+// typealias signed long FT_F26Dot6;
+alias F26Dot6 = CLong;
+// typealias signed long FT_Pos;
+alias Pos = CLong;
 
 // FT_Library
-def Library = void*;
+alias Library = void*;
 
 struct Matrix {
     Fixed xx, xy;
@@ -315,8 +314,8 @@ struct BBox {
     Pos xMax, yMax;
 }
 
-// typedef void  (*FT_Generic_Finalizer)( void*  object );
-// def GenericFinalizer = fn void(void* object);
+// typetypedef void  (*FT_Generic_Finalizer)( void*  object );
+// typedef GenericFinalizer = fn void(void* object);
 
 struct Generic {
     // void*                 data;
@@ -335,8 +334,8 @@ struct CharMapRec {
     // FT_UShort encoding_id;
     UShort encoding_id;
 }
-// typedef struct FT_CharMapRec_*  FT_CharMap;
-def CharMap = CharMapRec*;
+// typetypedef struct FT_CharMapRec_*  FT_CharMap;
+alias CharMap = CharMapRec*;
 
 struct BitmapSize {
     // FT_Short height;
@@ -440,8 +439,8 @@ struct SizeRec {
     // FT_Size_Internal internal;
     void* internal;
 }
-// typedef struct FT_SizeRec_*  FT_Size;
-def Size = SizeRec*;
+// typetypedef struct FT_SizeRec_*  FT_Size;
+alias Size = SizeRec*;
 
 struct GlyphSlotRec {
     // FT_Library library;
@@ -489,8 +488,8 @@ struct GlyphSlotRec {
     // FT_Slot_Internal internal;
     void* internal;
 }
-// typedef struct FT_GlyphSlotRec_*  FT_GlyphSlot;
-def GlyphSlot = GlyphSlotRec*;
+// typetypedef struct FT_GlyphSlotRec_*  FT_GlyphSlot;
+alias GlyphSlot = GlyphSlotRec*;
 
 struct FaceRec {
     // FT_Long num_faces;
@@ -556,8 +555,8 @@ struct FaceRec {
     // FT_Face_Internal internal;
     void* internal;
 }
-// typedef struct FT_FaceRec_*  FT_Face;
-def Face = FaceRec*;
+// typetypedef struct FT_FaceRec_*  FT_Face;
+alias Face = FaceRec*;
 
 fn CInt initFreeType(Library* library) @extern("FT_Init_FreeType");
 fn CInt doneFreeType(Library library) @extern("FT_Done_FreeType");
@@ -579,8 +578,8 @@ fn CInt renderGlryph(GlyphSlot glyph, RenderMode render_mode) @extern("FT_Render
 
 fn CInt propertySet(Library library, CChar* module_name, CChar* property_name, void* value) @extern("FT_Property_Set");
 
-// typedef enum  FT_Encoding
-def Encoding = CULong;
+// typetypedef enum  FT_Encoding
+alias Encoding = CULong;
 
 // FT_ENC_TAG
 macro Encoding encTag($a, $b, $c, $d) {

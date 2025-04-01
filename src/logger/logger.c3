@@ -7,13 +7,13 @@ import libc;
 
 io::File out;
 
-fn void! open() {
+fn void? open() {
     out = file::open("bestty.log", "w")!;
 }
 
 fn void close() {
     if (catch excuse = out.close()) {
-        io::printf("can't close log file: %v", excuse);
+        io::printf("can't close log file: %s", excuse);
     }
 }
 

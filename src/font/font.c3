@@ -23,17 +23,15 @@ struct GlyphsAtlas {
     CUInt programID;
     Allocator allocator;
 
-    HashMap(<Char32, Glyph>)* glyphs;
+    HashMap{Char32, Glyph}* glyphs;
 
     usz maxHeight;
     usz maxWidth;
 }
 
-fn void! GlyphsAtlas.new_init(&self, CUInt fontSize = 32, int width = 800, int height = 600) => self.init(fontSize, width, height, allocator::heap());
-
-fn void! GlyphsAtlas.init(&self, CUInt fontSize, int width, int height, Allocator allocator) {
-    self.glyphs = allocator::new(allocator, HashMap(<Char32, Glyph>));
-    self.glyphs.new_init();
+fn void? GlyphsAtlas.init(&self, CUInt fontSize = 32, int width = 800, int height = 600, Allocator allocator = allocator::heap()) {
+    self.glyphs = allocator::new(allocator, HashMap{Char32, Glyph});
+    self.glyphs.init(allocator);
 
     self.allocator = allocator;
     self.programID = compileAndLinkShaders(width, height)!;
@@ -67,11 +65,6 @@ fn void! GlyphsAtlas.init(&self, CUInt fontSize, int width, int height, Allocato
     for (char c = 32; c < 128; c++) {
         self.load_unicode(c)!;
     }
-//    self.load_unicode('█')!;
-//    self.load_unicode('ĕ')!;
-//    self.load_unicode('¶')!;
-//    self.load_unicode('ʤ')!;
-//    self.load_unicode('ȡ')!;
 }
 
 fn void GlyphsAtlas.destroy(&self) {
@@ -82,7 +75,7 @@ fn void GlyphsAtlas.destroy(&self) {
     ft::doneFreeType(self.library);
 }
 
-fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
+fn Glyph? GlyphsAtlas.load_unicode(&self, Char32 charcode) {
     // disable byte-alignment restriction
     gl::pixelStorei(gl::GL_UNPACK_ALIGNMENT, 1);
 
@@ -95,13 +88,13 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
         return ft::CINT_TO_ERROR[err]?;
     }
 
-    err = ft::setPixelSizes(self.face, 0, self.fontSize);
+    err = ft::setPixelSizes(self.face, 0, (UInt)self.fontSize);
     if (err != 0) {
         logger::printfn("can't set pixel sizes: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
     }
 
-    err = ft::loadChar(self.face, charcode, ft::LOAD_DEFAULT);
+    err = ft::loadChar(self.face, (ULong)charcode, ft::LOAD_DEFAULT);
     if (err != 0) {
         logger::printfn("can't load glyph: %s", ft::CINT_TO_ERROR[err]);
         return ft::CINT_TO_ERROR[err]?;
@@ -122,7 +115,7 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
         gl::GL_TEXTURE_2D,
         0,
         gl::GL_RED,
-        self.face.glyph.bitmap.width,
+        (GLsizei)self.face.glyph.bitmap.width,
         self.face.glyph.bitmap.rows,
         0,
         gl::GL_RED,
@@ -139,15 +132,15 @@ fn Glyph! GlyphsAtlas.load_unicode(&self, Char32 charcode) {
     // now store character for later use
     Glyph glyph = {
         .textureID = texture,
-        .size = { self.face.glyph.bitmap.width, self.face.glyph.bitmap.rows},
+        .size = { (float)self.face.glyph.bitmap.width, self.face.glyph.bitmap.rows},
         .bearing = { self.face.glyph.bitmap_left, self.face.glyph.bitmap_top},
-        .advance = (uint)self.face.glyph.advance.x,
+        .advance = (UInt)self.face.glyph.advance.x >> 6,
     };
     (*self.glyphs)[charcode] = glyph;
     if (self.face.glyph.bitmap_top > self.maxHeight) {
         self.maxHeight = self.face.glyph.bitmap_top;
     }
-    if (self.face.glyph.advance.x >> 6 > self.maxWidth) {
+    if (self.face.glyph.advance.x >> 6 > (Pos)self.maxWidth) {
         self.maxWidth = (usz)self.face.glyph.advance.x >> 6;
     }
 

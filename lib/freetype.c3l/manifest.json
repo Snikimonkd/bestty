@@ -4,14 +4,11 @@
     "macos-aarch64": {
       "link-args": [
         "-I/opt/homebrew/opt/freetype/include/freetype2",
-        "-I/opt/homebrew/opt/ftgl/include/FTGL",
-        "-L/opt/homebrew/opt/freetype/lib",
-        "-L/opt/homebrew/opt/ftgl/lib"
+        "-L/opt/homebrew/opt/freetype/lib"
       ],
       "dependencies": [],
       "linked-libraries": [
-        "freetype",
-        "ftgl"
+        "freetype"
       ]
     }
   }

@@ -6,11 +6,8 @@ import parser;
 
 import std::collections::list;
 
-def UTF8String = Char32[];
-
-fault ScrollbackError {
-    UNIMPLEMENTED_ACTION,
-}
+faultdef
+    UNIMPLEMENTED_ACTION;
 
 struct Cursor {
     Char32 form;
@@ -20,7 +17,7 @@ struct Cursor {
 
 struct Scrollback {
     // Ring(<UTF8String>) lines;
-    UTF8String[] lines;
+    Char32[][] lines;
     Cursor cursor;
     usz width;
     usz height;
@@ -32,10 +29,10 @@ fn void Scrollback.init(&self, usz width, usz height, Allocator allocator = allo
     self.allocator = allocator;
     self.width = width;
     self.height = height;
-    self.lines = allocator::new_array(allocator, UTF8String, height);
+    self.lines = allocator::new_array(allocator, Char32[], height);
     for (usz i = 0; i < height; i++) {
         // one more for '\0'
-        self.lines[i] = allocator::new_array(allocator, Char32, width+1);
+        self.lines[i] = (Char32[])allocator::new_array(allocator, Char32, width+1);
     }
     self.cursor = {
         .form = '█',
@@ -51,7 +48,7 @@ fn void Scrollback.destroy(&self) {
     allocator::free(self.allocator, self.lines);
 }
 
-fn void! Scrollback.handle(&self, PtyAction action) {
+fn void? Scrollback.handle(&self, PtyAction action) {
     switch (action.type) {
         case PRINT:
             self.push((Char32)action.payload.print)!;
@@ -69,22 +66,22 @@ fn void! Scrollback.handle(&self, PtyAction action) {
     }
 }
 
-fn void! Scrollback.spin(&self) {
+fn void? Scrollback.spin(&self) {
     // empty the first line
     self.lines[0][0] = '\0';
     // make the last line empty
-    UTF8String tmp = self.lines[0];
+    Char32[] tmp = self.lines[0];
     for (usz i = 0; i < self.height-1; i++) {
         self.lines[i] = self.lines[i+1];
     }
     self.lines[self.height-1] = tmp;
 }
 
-fn void! Scrollback.handle_execute(&self, char c) {
+fn void? Scrollback.handle_execute(&self, char c) {
     switch (c) {
         case '\n':
             // end current line
-            self.lines[self.cursor.y][self.cursor.x] = '\0';
+            self.lines[self.cursor.y][self.cursor.x] = '\n';
 
             // move cursor to the next line
             self.cursor.x = 0;
@@ -106,7 +103,7 @@ fn void! Scrollback.handle_execute(&self, char c) {
     }
 }
 
-fn void! Scrollback.push(&self, Char32 c) {
+fn void? Scrollback.push(&self, Char32 c) {
     if (self.cursor.x == self.width-1) {
         // handle line wrapping
         self.cursor.x = 0;
