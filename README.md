@@ -2,7 +2,7 @@
 
 My attempt to implement a terminal emulator in [c3](https://c3-lang.org).
 
-![output.gif](/showcase/output.gif)
+![output.gif](/showcase/output2.gif)
 
 ### State of the project
 
